@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
-// Usuarios actualizados según tu solicitud
+// Usuarios actualizados
 const USERS = {
   admin: { pass: 'admin123', label: 'Administrador' },
   equipo: { pass: 'equipo123', label: 'Equipo' },
@@ -41,7 +41,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [editCard, setEditCard] = useState(null)
   const [formMsg, setFormMsg] = useState(null)
-  // Se añade 'sector' al estado inicial del formulario
   const [form, setForm] = useState({ id: '', nombre: '', rut: '', direccion: '', sector: '', contacto: '' })
   const [selectedIds, setSelectedIds] = useState([])
 
@@ -56,7 +55,6 @@ export default function Home() {
   }
 
   function doLogin() {
-    // Normalizamos el login para que sea insensible a mayúsculas en el nombre de usuario
     const u = loginUser.toLowerCase()
     if (USERS[u] && USERS[u].pass === loginPass) {
       setUser({ name: u, label: USERS[u].label })
@@ -71,7 +69,7 @@ export default function Home() {
   }
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === filtered.length) setSelectedIds([])
+    if (selectedIds.length === filtered.length && filtered.length > 0) setSelectedIds([])
     else setSelectedIds(filtered.map(c => c.id))
   }
 
@@ -88,7 +86,6 @@ export default function Home() {
       setFormMsg({ ok: false, text: 'ID, nombre y RUT son obligatorios.' })
       return
     }
-    // Combinamos dirección y sector si es necesario, o enviamos por separado si tu tabla tiene la columna
     const { error } = await supabase.from('tarjetas').insert({ ...form, estado: 'habilitada' })
     if (error) setFormMsg({ ok: false, text: 'Error al registrar. Verifique si el ID ya existe.' })
     else {
@@ -100,23 +97,17 @@ export default function Home() {
   }
 
   async function guardarEdicion() {
-    // IMPORTANTE: Aseguramos que 'observaciones' esté incluido en el objeto de actualización
     const { error } = await supabase.from('tarjetas').update({
         nombre: editCard.nombre,
         rut: editCard.rut,
         direccion: editCard.direccion,
-        sector: editCard.sector, // Se añade sector a la edición
+        sector: editCard.sector,
         contacto: editCard.contacto,
         estado: editCard.estado,
-        observaciones: editCard.observaciones 
+        observaciones: editCard.observaciones // CORREGIDO: Ahora sí se guardan
     }).eq('id', editCard.id)
     
-    if (!error) { 
-      setEditCard(null)
-      fetchCards() 
-    } else {
-      alert("Error al guardar: " + error.message)
-    }
+    if (!error) { setEditCard(null); fetchCards() }
   }
 
   async function eliminarTarjeta() {
@@ -140,123 +131,59 @@ export default function Home() {
   }
 
   if (!user) return (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: 'linear-gradient(-45deg, #00B5AD, #6B8500, #008a84, #4e6100)',
-      backgroundSize: '400% 400%',
-      animation: 'gradientBG 15s ease infinite',
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      padding: '1rem' 
-    }}>
-        <style>{`
-          @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-        `}</style>
-        
-        <div style={{ 
-          background: 'rgba(255, 255, 255, 0.95)', 
-          backdropFilter: 'blur(10px)',
-          padding: '3rem 2.5rem', 
-          borderRadius: 28, 
-          boxShadow: '0 20px 40px rgba(0,0,0,0.2)', 
-          width: '100%', 
-          maxWidth: 380,
-          textAlign: 'center'
-        }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(-45deg, #00B5AD, #6B8500, #008a84, #4e6100)', backgroundSize: '400% 400%', animation: 'gradientBG 15s ease infinite', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+        <style>{`@keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }`}</style>
+        <div style={{ background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', padding: '3rem 2.5rem', borderRadius: 28, boxShadow: '0 20px 40px rgba(0,0,0,0.2)', width: '100%', maxWidth: 380, textAlign: 'center' }}>
             <div style={{ marginBottom: '2.5rem' }}>
-                <div style={{ 
-                  width: 70, 
-                  height: 70, 
-                  background: '#00B5AD', 
-                  borderRadius: '22px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  margin: '0 auto 18px', 
-                  boxShadow: '0 8px 15px rgba(0,181,173,0.3)',
-                  transform: 'rotate(-5deg)'
-                }}>
+                <div style={{ width: 70, height: 70, background: '#00B5AD', borderRadius: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', boxShadow: '0 8px 15px rgba(0,181,173,0.3)', transform: 'rotate(-5deg)' }}>
                     <svg width="35" height="35" viewBox="0 0 24 24" fill="none">
                       <path d="M3 4 L12 20 L21 4" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
                       <circle cx="12" cy="20" r="3" fill="#D63D8F"/>
                     </svg>
                 </div>
                 <div style={{ fontSize: 26, fontWeight: 900, color: '#333', letterSpacing: '-1px' }}>Joven+ Florida</div>
+                <div style={{ width: '40px', height: '4px', background: '#6B8500', margin: '10px auto', borderRadius: '2px' }}></div>
             </div>
-
             <div style={{ textAlign: 'left' }}>
               <label style={{ fontSize: 11, fontWeight: 800, color: '#999', marginLeft: 5 }}>USUARIO</label>
-              <input 
-                value={loginUser} 
-                onChange={e => setLoginUser(e.target.value)} 
-                placeholder="nverdejo / jparra / admin" 
-                style={{ marginBottom: 18, marginTop: 5, borderRadius: 12, border: '1px solid #eee', background: '#f8f9fa' }} 
-              />
-              
+              <input value={loginUser} onChange={e => setLoginUser(e.target.value)} placeholder="Ingresa tu usuario" style={{ marginBottom: 18, marginTop: 5, borderRadius: 12, border: '1px solid #eee', background: '#f8f9fa' }} />
               <label style={{ fontSize: 11, fontWeight: 800, color: '#999', marginLeft: 5 }}>CONTRASEÑA</label>
-              <input 
-                type="password" 
-                value={loginPass} 
-                onChange={e => setLoginPass(e.target.value)} 
-                placeholder="••••••••" 
-                style={{ marginBottom: 20, marginTop: 5, borderRadius: 12, border: '1px solid #eee', background: '#f8f9fa' }} 
-                onKeyDown={e => e.key === 'Enter' && doLogin()} 
-              />
+              <input type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="••••••••" style={{ marginBottom: 20, marginTop: 5, borderRadius: 12, border: '1px solid #eee', background: '#f8f9fa' }} onKeyDown={e => e.key === 'Enter' && doLogin()} />
             </div>
-
-            {loginErr && (
-              <div style={{ 
-                fontSize: 12, color: '#A0005A', marginBottom: 20, textAlign: 'center', fontWeight: 700,
-                background: '#FCE8F3', padding: '8px', borderRadius: '8px'
-              }}>
-                Credenciales incorrectas
-              </div>
-            )}
-
-            <button className="btn-teal" style={{ width: '100%', padding: '16px', borderRadius: 14, fontSize: 15, fontWeight: 800 }} onClick={doLogin}>
-              ACCEDER AL PANEL
-            </button>
+            {loginErr && <div style={{ fontSize: 12, color: '#A0005A', marginBottom: 20, textAlign: 'center', fontWeight: 700, background: '#FCE8F3', padding: '8px', borderRadius: '8px' }}>Credenciales incorrectas</div>}
+            <button className="btn-teal" style={{ width: '100%', padding: '16px', borderRadius: 14, fontSize: 15, fontWeight: 800 }} onClick={doLogin}>ACCEDER AL PANEL</button>
         </div>
     </div>
   )
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8f9fa' }}>
-      {/* Header */}
       <div style={{ background: '#00B5AD', padding: '12px 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>Joven+ Florida | {user.label}</span>
+            <div style={{ width: 32, height: 32, background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 4 L12 20 L21 4" stroke="#00B5AD" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="20" r="3" fill="#D63D8F"/></svg>
+            </div>
+            <span style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>Joven+ Florida</span>
         </div>
-        <button className="btn-sm" onClick={() => setUser(null)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px 15px' }}>Cerrar Sesión</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ color: 'white', fontSize: 11, fontWeight: 600 }}>{user.label}</span>
+          <button className="btn-sm" onClick={() => setUser(null)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px 15px' }}>Cerrar Sesión</button>
+        </div>
       </div>
 
-      {/* Tabs */}
       <div style={{ display: 'flex', background: 'white', borderBottom: '1px solid #eee' }}>
         {['resumen', 'registro'].map((t, i) => (
-          <button key={t} onClick={() => setTab(t)} style={{
-            flex: 1, padding: '16px', fontSize: 12, fontWeight: 800, border: 'none', background: 'none',
-            color: tab === t ? '#00B5AD' : '#bbb', borderBottom: tab === t ? '4px solid #00B5AD' : '4px solid transparent',
-            transition: '0.3s'
-          }}>{['LISTA DE BENEFICIARIOS', 'NUEVO REGISTRO'][i]}</button>
+          <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: '16px', fontSize: 12, fontWeight: 800, border: 'none', background: 'none', color: tab === t ? '#00B5AD' : '#bbb', borderBottom: tab === t ? '4px solid #00B5AD' : '4px solid transparent', transition: '0.3s' }}>
+            {['LISTA DE BENEFICIARIOS', 'NUEVO REGISTRO'][i]}
+          </button>
         ))}
       </div>
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '1.5rem' }}>
         {tab === 'resumen' && (
           <>
-            {/* Stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: '2rem' }}>
-              {[
-                { label: 'TOTAL', val: stats.total, color: '#444', bg: 'white' },
-                { label: 'HABILIT.', val: stats.hab, color: '#007A75', bg: '#E0F7F6' },
-                { label: 'INHABILIT.', val: stats.inh, color: '#6B8500', bg: '#F2F9D6' },
-                { label: 'BLOQ.', val: stats.bloq, color: '#A0005A', bg: '#FCE8F3' }
-              ].map(s => (
+              {[{ label: 'TOTAL', val: stats.total, color: '#444', bg: 'white' }, { label: 'HABILIT.', val: stats.hab, color: '#007A75', bg: '#E0F7F6' }, { label: 'INHABILIT.', val: stats.inh, color: '#6B8500', bg: '#F2F9D6' }, { label: 'BLOQ.', val: stats.bloq, color: '#A0005A', bg: '#FCE8F3' }].map(s => (
                 <div key={s.label} style={{ background: s.bg, border: '1px solid rgba(0,0,0,0.03)', borderRadius: 12, padding: '12px 5px', textAlign: 'center' }}>
                   <div style={{ fontSize: 20, fontWeight: 900, color: s.color }}>{s.val}</div>
                   <div style={{ fontSize: 9, fontWeight: 800, color: s.color, opacity: 0.7 }}>{s.label}</div>
@@ -264,36 +191,37 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Buscador */}
             <div style={{ position: 'relative', marginBottom: 20 }}>
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, RUT o ID..." style={{ paddingLeft: 40, borderRadius: 12, height: 45 }} />
                 <span style={{ position: 'absolute', left: 15, top: '52%', transform: 'translateY(-50%)', fontSize: 18 }}>🔍</span>
             </div>
 
-            {/* Lista */}
+            {/* BARRA DE ACCIONES MASIVAS RESTAURADA */}
+            {selectedIds.length > 0 && (
+              <div style={{ background: '#222', color: 'white', padding: '14px 20px', borderRadius: 14, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, flex: 1 }}>{selectedIds.length} seleccionados</span>
+                <button className="btn-sm" onClick={() => updateBulkStatus('habilitada')} style={{ background: '#00B5AD' }}>Habilitar</button>
+                <button className="btn-sm" onClick={() => updateBulkStatus('inhabilitada')} style={{ background: '#6B8500' }}>Inhabilitar</button>
+                <button className="btn-sm" onClick={() => updateBulkStatus('bloqueada')} style={{ background: '#D63D8F' }}>Bloquear</button>
+                <button onClick={() => setSelectedIds([])} style={{ background: 'none', border: 'none', color: 'white', fontSize: 24, marginLeft: 5 }}>×</button>
+              </div>
+            )}
+
+            {/* SELECCIONAR TODO RESTAURADO */}
+            <div style={{ display: 'flex', alignItems: 'center', padding: '0 10px 12px', gap: 12 }}>
+                <input type="checkbox" checked={selectedIds.length === filtered.length && filtered.length > 0} onChange={toggleSelectAll} style={{ width: 20, height: 20 }} />
+                <span style={{ fontSize: 11, color: '#999', fontWeight: 800 }}>SELECCIONAR TODOS</span>
+            </div>
+
             {loading ? <div style={{ textAlign: 'center', padding: '4rem', color: '#aaa', fontWeight: 600 }}>Cargando datos...</div> : 
               filtered.map((c, idx) => (
-                <div key={c.id} style={{ 
-                  background: 'white', border: '1px solid #eee', borderRadius: 14, padding: '15px', marginBottom: 10, 
-                  display: 'flex', alignItems: 'center', gap: 15, transition: '0.2s',
-                  opacity: c.estado === 'inhabilitada' ? 0.6 : 1
-                }}>
+                <div key={c.id} style={{ background: 'white', border: '1px solid #eee', borderRadius: 14, padding: '15px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 15, transition: '0.2s', opacity: c.estado === 'inhabilitada' ? 0.6 : 1 }}>
                   <input type="checkbox" checked={selectedIds.includes(c.id)} onChange={() => toggleSelect(c.id)} style={{ width: 20, height: 20, flexShrink: 0 }} />
-                  
-                  <div style={{ 
-                    width: 44, height: 44, borderRadius: '50%', 
-                    background: AVATAR_COLORS[idx % AVATAR_COLORS.length], 
-                    color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                    fontSize: 14, fontWeight: 800, flexShrink: 0 
-                  }}>
-                    {initials(c.nombre)}
-                  </div>
-
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', background: AVATAR_COLORS[idx % AVATAR_COLORS.length], color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, flexShrink: 0 }}>{initials(c.nombre)}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#333' }}>{c.nombre}</div>
                     <div style={{ fontSize: 11, color: '#888', marginTop: 3 }}>ID: <b>{c.id}</b> • {c.sector || 'Sin sector'}</div>
                   </div>
-
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
                     <Badge estado={c.estado} />
                     <button className="btn-magenta" onClick={() => setEditCard({ ...c })} style={{ padding: '8px 15px', fontSize: 11, fontWeight: 700 }}>VER / EDITAR</button>
@@ -307,39 +235,16 @@ export default function Home() {
         {tab === 'registro' && (
           <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 20, padding: '2.5rem' }}>
             <h3 style={{ marginTop: 0, marginBottom: 25, fontSize: 20, fontWeight: 800 }}>Nuevo Beneficiario</h3>
-            
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <div style={{ marginBottom: 15 }}>
-                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>ID TARJETA</label>
-                    <input value={form.id} onChange={e => setForm({ ...form, id: e.target.value.toUpperCase() })} placeholder="JM-000" />
-                </div>
-                <div style={{ marginBottom: 15 }}>
-                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>RUT</label>
-                    <input value={form.rut} onChange={e => setForm({ ...form, rut: e.target.value })} placeholder="12.345.678-9" />
-                </div>
+                <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>ID TARJETA</label><input value={form.id} onChange={e => setForm({ ...form, id: e.target.value.toUpperCase() })} placeholder="JM-000" /></div>
+                <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>RUT</label><input value={form.rut} onChange={e => setForm({ ...form, rut: e.target.value })} placeholder="12.345.678-9" /></div>
             </div>
-
-            <div style={{ marginBottom: 15 }}>
-                <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>NOMBRE COMPLETO</label>
-                <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} placeholder="Nombre y Apellidos" />
-            </div>
-
+            <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>NOMBRE COMPLETO</label><input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} placeholder="Nombre y Apellidos" /></div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <div style={{ marginBottom: 15 }}>
-                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>DIRECCIÓN (CALLE/PASAJE)</label>
-                    <input value={form.direccion} onChange={e => setForm({ ...form, direccion: e.target.value })} placeholder="Ej: Las Palmas 123" />
-                </div>
-                <div style={{ marginBottom: 15 }}>
-                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>SECTOR / VILLA</label>
-                    <input value={form.sector} onChange={e => setForm({ ...form, sector: e.target.value })} placeholder="Ej: Villa El Prado" />
-                </div>
+                <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>DIRECCIÓN</label><input value={form.direccion} onChange={e => setForm({ ...form, direccion: e.target.value })} placeholder="Calle / Pasaje" /></div>
+                <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>SECTOR / VILLA</label><input value={form.sector} onChange={e => setForm({ ...form, sector: e.target.value })} placeholder="Ej: Villa El Prado" /></div>
             </div>
-
-            <div style={{ marginBottom: 20 }}>
-                <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>CONTACTO</label>
-                <input value={form.contacto} onChange={e => setForm({ ...form, contacto: e.target.value })} placeholder="+569 / email" />
-            </div>
-
+            <div style={{ marginBottom: 20 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>CONTACTO</label><input value={form.contacto} onChange={e => setForm({ ...form, contacto: e.target.value })} placeholder="+569 / email" /></div>
             <button className="btn-teal" style={{ width: '100%', padding: '16px', fontWeight: 700 }} onClick={registrar}>REGISTRAR BENEFICIARIO</button>
             {formMsg && <div style={{ fontSize: 13, marginTop: 20, textAlign: 'center', fontWeight: 700, color: formMsg.ok ? '#007A75' : '#A0005A' }}>{formMsg.text}</div>}
           </div>
@@ -350,58 +255,24 @@ export default function Home() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 100, backdropFilter: 'blur(5px)' }}>
           <div style={{ background: 'white', borderRadius: 20, padding: '2.5rem', width: '100%', maxWidth: 500, maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 25, borderBottom: '2px solid #f0f0f0', paddingBottom: 15 }}>Ficha del Beneficiario</div>
-            
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginBottom: 15 }}>
-                <div>
-                    <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>RUT</label>
-                    <input value={editCard.rut} onChange={e => setEditCard({...editCard, rut: e.target.value})} />
-                </div>
-                <div>
-                    <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>ESTADO</label>
-                    <select value={editCard.estado} onChange={e => setEditCard({...editCard, estado: e.target.value})} style={{ padding: '10px', width: '100%', borderRadius: 10, border: '1px solid #ddd' }}>
-                        <option value="habilitada">HABILITADA</option>
-                        <option value="inhabilitada">INHABILITADA</option>
-                        <option value="bloqueada">BLOQUEADA</option>
-                    </select>
-                </div>
+                <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>RUT</label><input value={editCard.rut} onChange={e => setEditCard({...editCard, rut: e.target.value})} /></div>
+                <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>ESTADO</label><select value={editCard.estado} onChange={e => setEditCard({...editCard, estado: e.target.value})} style={{ padding: '10px', width: '100%', borderRadius: 10, border: '1px solid #ddd' }}><option value="habilitada">HABILITADA</option><option value="inhabilitada">INHABILITADA</option><option value="bloqueada">BLOQUEADA</option></select></div>
             </div>
-
-            <div style={{ marginBottom: 15 }}>
-                <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>NOMBRE</label>
-                <input value={editCard.nombre} onChange={e => setEditCard({...editCard, nombre: e.target.value})} />
-            </div>
-
+            <div style={{ marginBottom: 15 }}><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>NOMBRE</label><input value={editCard.nombre} onChange={e => setEditCard({...editCard, nombre: e.target.value})} /></div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginBottom: 15 }}>
-                <div>
-                    <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>DIRECCIÓN</label>
-                    <input value={editCard.direccion || ''} onChange={e => setEditCard({...editCard, direccion: e.target.value})} />
-                </div>
-                <div>
-                    <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>SECTOR</label>
-                    <input value={editCard.sector || ''} onChange={e => setEditCard({...editCard, sector: e.target.value})} />
-                </div>
+                <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>DIRECCIÓN</label><input value={editCard.direccion || ''} onChange={e => setEditCard({...editCard, direccion: e.target.value})} /></div>
+                <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>SECTOR</label><input value={editCard.sector || ''} onChange={e => setEditCard({...editCard, sector: e.target.value})} /></div>
             </div>
-
-            <div style={{ marginBottom: 15 }}>
-                <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>CONTACTO</label>
-                <input value={editCard.contacto || ''} onChange={e => setEditCard({...editCard, contacto: e.target.value})} />
-            </div>
-
             <div style={{ marginBottom: 25 }}>
-                <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>OBSERVACIONES / NOTAS</label>
-                <textarea 
-                    value={editCard.observaciones || ''} 
-                    onChange={e => setEditCard({...editCard, observaciones: e.target.value})} 
-                    placeholder="Notas internas..."
-                    style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid #ddd', height: 80, fontSize: 13, fontFamily: 'inherit' }}
-                />
+                <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>OBSERVACIONES</label>
+                <textarea value={editCard.observaciones || ''} onChange={e => setEditCard({...editCard, observaciones: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid #ddd', height: 80, fontSize: 13, fontFamily: 'inherit' }} />
             </div>
-            
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button className="btn-teal" onClick={guardarEdicion} style={{ padding: '14px' }}>GUARDAR CAMBIOS</button>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={eliminarTarjeta} style={{ flex: 1, background: '#fff', color: '#A0005A', border: '1px solid #A0005A', fontWeight: 700 }}>ELIMINAR</button>
-                <button onClick={() => setEditCard(null)} style={{ flex: 1, background: '#f0f0f0', border: 'none', fontWeight: 700 }}>CERRAR</button>
+                <button onClick={eliminarTarjeta} style={{ flex: 1, background: '#fff', color: '#A0005A', border: '1px solid #A0005A', fontWeight: 700, borderRadius: 10 }}>ELIMINAR</button>
+                <button onClick={() => setEditCard(null)} style={{ flex: 1, background: '#f0f0f0', border: 'none', fontWeight: 700, borderRadius: 10 }}>CERRAR</button>
               </div>
             </div>
           </div>
