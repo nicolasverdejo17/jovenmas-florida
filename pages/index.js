@@ -47,7 +47,7 @@ export default function Home() {
   const [searchComercio, setSearchComercio] = useState('')
   const [selectedComercios, setSelectedComercios] = useState([])
   const [editComercio, setEditComercio] = useState(null)
-  const [formComercio, setFormComercio] = useState({ nombre: '', categoria: '', descuento: '' })
+  const [formComercio, setFormComercio] = useState({ nombre: '', categoria: '', descuento: '', direccion: '', sector: '' })
   const [formMsgComercio, setFormMsgComercio] = useState(null)
   const [loadingComercios, setLoadingComercios] = useState(false)
  
@@ -139,7 +139,7 @@ export default function Home() {
     if (error) setFormMsgComercio({ ok: false, text: 'Error al registrar comercio.' })
     else {
       setFormMsgComercio({ ok: true, text: 'Comercio registrado correctamente.' })
-      setFormComercio({ nombre: '', categoria: '', descuento: '' })
+      setFormComercio({ nombre: '', categoria: '', descuento: '', direccion: '', sector: '' })
       fetchComercios()
       setTimeout(() => setFormMsgComercio(null), 2500)
     }
@@ -148,7 +148,8 @@ export default function Home() {
   async function guardarEdicionComercio() {
     const { error } = await supabase.from('comercios').update({
       nombre: editComercio.nombre, categoria: editComercio.categoria,
-      descuento: editComercio.descuento, estado: editComercio.estado
+      descuento: editComercio.descuento, estado: editComercio.estado,
+      direccion: editComercio.direccion, sector: editComercio.sector
     }).eq('id', editComercio.id)
     if (!error) { setEditComercio(null); fetchComercios() }
   }
@@ -336,7 +337,11 @@ export default function Home() {
                   <div style={{ width: 44, height: 44, borderRadius: '50%', background: AVATAR_COLORS[idx % AVATAR_COLORS.length], color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, flexShrink: 0 }}>{initials(c.nombre)}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#333' }}>{c.nombre}</div>
-                    <div style={{ fontSize: 11, color: '#888', marginTop: 3 }}>{c.categoria || 'Sin categoría'} • <b style={{ color: '#D63D8F' }}>{c.descuento}% desc.</b></div>
+                    <div style={{ fontSize: 11, color: '#888', marginTop: 3 }}>{c.categoria || 'Sin categoría'} • {c.sector || 'Sin sector'}</div>
+                  </div>
+                  <div style={{ background: '#FCE8F3', borderRadius: 10, padding: '6px 12px', textAlign: 'center', flexShrink: 0, marginRight: 8 }}>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: '#D63D8F', lineHeight: 1 }}>{c.descuento}%</div>
+                    <div style={{ fontSize: 8, fontWeight: 800, color: '#D63D8F' }}>DESC.</div>
                   </div>
                   <button className="btn-magenta" onClick={() => setEditComercio({ ...c })} style={{ padding: '8px 15px', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>VER / EDITAR</button>
                 </div>
@@ -351,8 +356,12 @@ export default function Home() {
             <h3 style={{ marginTop: 0, marginBottom: 25, fontSize: 20, fontWeight: 800 }}>Nuevo Local Colaborador</h3>
             <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>NOMBRE DEL LOCAL</label><input value={formComercio.nombre} onChange={e => setFormComercio({ ...formComercio, nombre: e.target.value })} placeholder="Ej: Gimnasio FitZone" /></div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-              <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>CATEGORÍA</label><input value={formComercio.categoria} onChange={e => setFormComercio({ ...formComercio, categoria: e.target.value })} placeholder="Ej: Gym, Panadería, Sushi..." /></div>
-              <div style={{ marginBottom: 20 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>% DESCUENTO</label><input type="number" value={formComercio.descuento} onChange={e => setFormComercio({ ...formComercio, descuento: e.target.value })} placeholder="Ej: 15" /></div>
+              <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>CATEGORÍA</label><input value={formComercio.categoria} onChange={e => setFormComercio({ ...formComercio, categoria: e.target.value })} placeholder="Ej: Gym, Panadería..." /></div>
+              <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>% DESCUENTO</label><input type="number" value={formComercio.descuento} onChange={e => setFormComercio({ ...formComercio, descuento: e.target.value })} placeholder="Ej: 15" /></div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <div style={{ marginBottom: 20 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>DIRECCIÓN</label><input value={formComercio.direccion} onChange={e => setFormComercio({ ...formComercio, direccion: e.target.value })} placeholder="Ej: Calle Los Pinos 123" /></div>
+              <div style={{ marginBottom: 20 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>SECTOR / VILLA</label><input value={formComercio.sector} onChange={e => setFormComercio({ ...formComercio, sector: e.target.value })} placeholder="Ej: Centro, Villa El Prado" /></div>
             </div>
             <button className="btn-teal" style={{ width: '100%', padding: '16px', fontWeight: 700 }} onClick={registrarComercio}>REGISTRAR LOCAL</button>
             {formMsgComercio && <div style={{ fontSize: 13, marginTop: 20, textAlign: 'center', fontWeight: 700, color: formMsgComercio.ok ? '#007A75' : '#A0005A' }}>{formMsgComercio.text}</div>}
@@ -401,9 +410,13 @@ export default function Home() {
           <div style={{ background: 'white', borderRadius: 20, padding: '2.5rem', width: '100%', maxWidth: 500 }}>
             <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 25, borderBottom: '2px solid #f0f0f0', paddingBottom: 15 }}>Ficha del Comercio</div>
             <div style={{ marginBottom: 15 }}><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>NOMBRE</label><input value={editComercio.nombre} onChange={e => setEditComercio({ ...editComercio, nombre: e.target.value })} /></div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginBottom: 25 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginBottom: 15 }}>
               <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>CATEGORÍA</label><input value={editComercio.categoria || ''} onChange={e => setEditComercio({ ...editComercio, categoria: e.target.value })} /></div>
               <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>% DESCUENTO</label><input type="number" value={editComercio.descuento || ''} onChange={e => setEditComercio({ ...editComercio, descuento: e.target.value })} /></div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginBottom: 25 }}>
+              <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>DIRECCIÓN</label><input value={editComercio.direccion || ''} onChange={e => setEditComercio({ ...editComercio, direccion: e.target.value })} /></div>
+              <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>SECTOR</label><input value={editComercio.sector || ''} onChange={e => setEditComercio({ ...editComercio, sector: e.target.value })} /></div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button className="btn-teal" onClick={guardarEdicionComercio} style={{ padding: '14px' }}>GUARDAR CAMBIOS</button>
