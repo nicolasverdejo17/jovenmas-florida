@@ -37,6 +37,9 @@ export default function Home() {
   const [editCard, setEditCard] = useState(null)
   const [formMsg, setFormMsg] = useState(null)
   const [form, setForm] = useState({ id: '', nombre: '', rut: '', direccion: '', contacto: '' })
+  
+  // Estado para la selección múltiple
+  const [selectedIds, setSelectedIds] = useState([])
 
   useEffect(() => { if (user) fetchCards() }, [user])
 
@@ -44,6 +47,7 @@ export default function Home() {
     setLoading(true)
     const { data } = await supabase.from('tarjetas').select('*').order('creado_en', { ascending: false })
     setCards(data || [])
+    setSelectedIds([]) // Limpiar selección al recargar
     setLoading(false)
   }
 
@@ -53,6 +57,38 @@ export default function Home() {
       setLoginErr(false)
     } else {
       setLoginErr(true)
+    }
+  }
+
+  // Manejo de checkboxes
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    )
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filtered.length) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(filtered.map(c => c.id))
+    }
+  }
+
+  // Acción masiva (Inhabilitar o Bloquear grupo)
+  async function updateBulkStatus(nuevoEstado) {
+    const confirmar = confirm(`¿Cambiar el estado de ${selectedIds.length} tarjetas a "${nuevoEstado}"?`)
+    if (!confirmar) return
+
+    const { error } = await supabase
+      .from('tarjetas')
+      .update({ estado: nuevoEstado })
+      .in('id', selectedIds)
+
+    if (error) {
+      alert("Error en actualización masiva: " + error.message)
+    } else {
+      fetchCards()
     }
   }
 
@@ -91,19 +127,11 @@ export default function Home() {
   }
 
   async function eliminarTarjeta() {
-    const confirmar = confirm(`¿Estás seguro de que deseas eliminar la tarjeta de ${editCard.nombre}? Esta acción no se puede deshacer.`)
+    const confirmar = confirm(`¿Estás seguro de que deseas eliminar la tarjeta de ${editCard.nombre}?`)
     if (confirmar) {
-      const { error } = await supabase
-        .from('tarjetas')
-        .delete()
-        .eq('id', editCard.id)
-
-      if (error) {
-        alert("Error al eliminar: " + error.message)
-      } else {
-        setEditCard(null)
-        fetchCards()
-      }
+      const { error } = await supabase.from('tarjetas').delete().eq('id', editCard.id)
+      if (error) alert("Error al eliminar: " + error.message)
+      else { setEditCard(null); fetchCards() }
     }
   }
 
@@ -118,30 +146,22 @@ export default function Home() {
 
   if (!user) return (
     <div style={{ minHeight: '100vh', background: '#f9f9f9' }}>
+      {/* Header simple para Login */}
       <div style={{ background: '#00B5AD', padding: '14px 1rem', display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ width: 32, height: 32, background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M3 4 L12 20 L21 4" stroke="#00B5AD" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <circle cx="12" cy="20" r="3" fill="#D63D8F"/>
-          </svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 4 L12 20 L21 4" stroke="#00B5AD" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="20" r="3" fill="#D63D8F"/></svg>
         </div>
         <div>
           <div style={{ color: 'white', fontSize: 15, fontWeight: 500 }}>Joven+ Florida</div>
-          <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11 }}>Sistema de tarjetas</div>
+          <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11 }}>Panel Municipal</div>
         </div>
       </div>
       <div style={{ maxWidth: 360, margin: '3rem auto', padding: '0 1rem' }}>
         <div style={{ fontSize: 22, fontWeight: 500, marginBottom: 4 }}>Iniciar sesión</div>
         <div style={{ width: 36, height: 3, background: '#D63D8F', borderRadius: 2, marginBottom: '1.5rem' }}></div>
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>Usuario</div>
-          <input value={loginUser} onChange={e => setLoginUser(e.target.value)} placeholder="Tu usuario" onKeyDown={e => e.key === 'Enter' && doLogin()} />
-        </div>
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>Contraseña</div>
-          <input type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="••••••" onKeyDown={e => e.key === 'Enter' && doLogin()} />
-        </div>
-        {loginErr && <div style={{ fontSize: 12, color: '#A0005A', marginBottom: 8 }}>Usuario o contraseña incorrectos.</div>}
+        <input value={loginUser} onChange={e => setLoginUser(e.target.value)} placeholder="Usuario" style={{ marginBottom: 10 }} />
+        <input type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="Contraseña" style={{ marginBottom: 10 }} onKeyDown={e => e.key === 'Enter' && doLogin()} />
+        {loginErr && <div style={{ fontSize: 12, color: '#A0005A', marginBottom: 8 }}>Datos incorrectos.</div>}
         <button className="btn-teal" style={{ width: '100%' }} onClick={doLogin}>Ingresar</button>
       </div>
     </div>
@@ -149,143 +169,124 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f9f9f9' }}>
+      {/* Header Principal */}
       <div style={{ background: '#00B5AD', padding: '14px 1rem', display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ width: 32, height: 32, background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M3 4 L12 20 L21 4" stroke="#00B5AD" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <circle cx="12" cy="20" r="3" fill="#D63D8F"/>
-          </svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 4 L12 20 L21 4" stroke="#00B5AD" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="20" r="3" fill="#D63D8F"/></svg>
         </div>
-        <div>
+        <div style={{ flex: 1 }}>
           <div style={{ color: 'white', fontSize: 15, fontWeight: 500 }}>Joven+ Florida</div>
-          <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11 }}>Sistema de tarjetas</div>
         </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>{user.label}</span>
-          <button className="btn-sm" onClick={() => setUser(null)} style={{ fontSize: 11, padding: '3px 8px' }}>Salir</button>
-        </div>
+        <button className="btn-sm" onClick={() => setUser(null)} style={{ fontSize: 11 }}>Salir</button>
       </div>
 
       <div style={{ display: 'flex', borderBottom: '1px solid #eee', background: 'white' }}>
         {['resumen', 'registro'].map((t, i) => (
           <button key={t} onClick={() => setTab(t)} style={{
-            flex: 1, padding: '10px 4px', fontSize: 13, fontWeight: 500, textAlign: 'center',
+            flex: 1, padding: '12px', fontSize: 13, fontWeight: 500,
             color: tab === t ? '#00B5AD' : '#888', background: 'transparent',
             border: 'none', borderBottom: tab === t ? '2px solid #00B5AD' : '2px solid transparent'
-          }}>{['Resumen', 'Registro'][i]}</button>
+          }}>{['Lista de Tarjetas', 'Nuevo Registro'][i]}</button>
         ))}
       </div>
 
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '1rem' }}>
         {tab === 'resumen' && (
           <>
+            {/* Estadísticas */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: '1rem' }}>
-              <div style={{ background: '#E0F7F6', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-                <div style={{ fontSize: 22, fontWeight: 500, color: '#007A75' }}>{cards.length}</div>
-                <div style={{ fontSize: 11, color: '#007A75' }}>Total</div>
+              <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+                <div style={{ fontSize: 20, fontWeight: 600, color: '#444' }}>{cards.length}</div>
+                <div style={{ fontSize: 10, color: '#888', textTransform: 'uppercase' }}>Total</div>
               </div>
-              <div style={{ background: '#F2F9D6', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-                <div style={{ fontSize: 22, fontWeight: 500, color: '#6B8500' }}>{habilitadas}</div>
-                <div style={{ fontSize: 11, color: '#6B8500' }}>Habilitadas</div>
+              <div style={{ background: '#E0F7F6', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+                <div style={{ fontSize: 20, fontWeight: 600, color: '#007A75' }}>{habilitadas}</div>
+                <div style={{ fontSize: 10, color: '#007A75', textTransform: 'uppercase' }}>Habilitadas</div>
               </div>
               <div style={{ background: '#FCE8F3', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-                <div style={{ fontSize: 22, fontWeight: 500, color: '#A0005A' }}>{bloqueadas}</div>
-                <div style={{ fontSize: 11, color: '#A0005A' }}>Bloqueadas</div>
+                <div style={{ fontSize: 20, fontWeight: 600, color: '#A0005A' }}>{bloqueadas}</div>
+                <div style={{ fontSize: 10, color: '#A0005A', textTransform: 'uppercase' }}>Bloqueadas</div>
               </div>
             </div>
-            <div style={{ position: 'relative', marginBottom: 12 }}>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, RUT o ID..." style={{ paddingLeft: 28 }} />
-              <span style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: '#aaa', fontSize: 13 }}>⌕</span>
+
+            {/* Buscador */}
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, RUT o ID..." style={{ marginBottom: 12 }} />
+
+            {/* Barra de Acciones Masivas (Solo aparece si hay seleccionados) */}
+            {selectedIds.length > 0 && (
+              <div style={{ background: '#333', color: 'white', padding: '10px 15px', borderRadius: 8, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10, animation: 'slideIn 0.3s' }}>
+                <span style={{ fontSize: 13, flex: 1 }}>{selectedIds.length} seleccionados</span>
+                <button className="btn-sm" onClick={() => updateBulkStatus('habilitada')} style={{ background: '#00B5AD', border: 'none' }}>Habilitar</button>
+                <button className="btn-sm" onClick={() => updateBulkStatus('inhabilitada')} style={{ background: '#888', border: 'none' }}>Inhabilitar</button>
+                <button className="btn-sm" onClick={() => updateBulkStatus('bloqueada')} style={{ background: '#D63D8F', border: 'none' }}>Bloquear</button>
+                <button onClick={() => setSelectedIds([])} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: 18, cursor: 'pointer' }}>×</button>
+              </div>
+            )}
+
+            {/* Cabecera de Lista */}
+            <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px 8px', gap: 10 }}>
+                <input type="checkbox" checked={selectedIds.length === filtered.length && filtered.length > 0} onChange={toggleSelectAll} style={{ cursor: 'pointer' }} />
+                <span style={{ fontSize: 11, color: '#888', fontWeight: 600 }}>SELECCIONAR TODO</span>
             </div>
-            {loading && <div style={{ textAlign: 'center', color: '#888', padding: '2rem', fontSize: 13 }}>Cargando...</div>}
+
+            {loading && <div style={{ textAlign: 'center', padding: '2rem' }}>Cargando...</div>}
+            
             {filtered.map(c => (
-              <div key={c.id} style={{ background: 'white', border: '1px solid #eee', borderRadius: 8, padding: '10px 12px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#E0F7F6', color: '#007A75', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>
+              <div key={c.id} style={{ 
+                background: 'white', border: '1px solid #eee', borderRadius: 8, padding: '10px 12px', marginBottom: 8, 
+                display: 'flex', alignItems: 'center', gap: 10,
+                opacity: c.estado === 'inhabilitada' ? 0.6 : 1 // Visualizador de inhabilitadas
+              }}>
+                <input type="checkbox" checked={selectedIds.includes(c.id)} onChange={() => toggleSelect(c.id)} />
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#eee', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>
                   {initials(c.nombre)}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.nombre}</div>
-                  <div style={{ fontSize: 11, color: '#888' }}>{c.rut} · {c.id}</div>
+                  <div style={{ fontSize: 13, fontWeight: 500 }}>{c.nombre}</div>
+                  <div style={{ fontSize: 11, color: '#888' }}>{c.id} · {c.rut}</div>
                 </div>
                 <Badge estado={c.estado} />
                 <button className="btn-magenta" onClick={() => setEditCard({ ...c })}>Editar</button>
               </div>
             ))}
-            {!loading && filtered.length === 0 && <div style={{ textAlign: 'center', color: '#888', padding: '2rem', fontSize: 13 }}>No hay tarjetas registradas aún.</div>}
           </>
         )}
 
         {tab === 'registro' && (
-          <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 12, padding: '1rem 1.25rem' }}>
-            <div style={{ marginBottom: 10 }}>
-              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>ID de la tarjeta física</div>
-              <input value={form.id} onChange={e => setForm({ ...form, id: e.target.value })} placeholder="Ej: JM-00142" />
+          <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 12, padding: '1.5rem' }}>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>ID Tarjeta Física</div>
+              <input value={form.id} onChange={e => setForm({ ...form, id: e.target.value })} placeholder="Ej: JM-001" />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>Nombre completo</div>
-                <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} placeholder="Nombre y apellidos" />
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>RUT</div>
-                <input value={form.rut} onChange={e => setForm({ ...form, rut: e.target.value })} placeholder="12.345.678-9" />
-              </div>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>Nombre Completo</div>
+              <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>Dirección</div>
-                <input value={form.direccion} onChange={e => setForm({ ...form, direccion: e.target.value })} placeholder="Calle, número" />
-              </div>
-              <div style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>Teléfono / Email</div>
-                <input value={form.contacto} onChange={e => setForm({ ...form, contacto: e.target.value })} placeholder="+56 9 ... o correo" />
-              </div>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>RUT</div>
+              <input value={form.rut} onChange={e => setForm({ ...form, rut: e.target.value })} placeholder="12.345.678-9" />
             </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button className="btn-teal" onClick={registrar}>Registrar y habilitar</button>
-              <button onClick={() => setForm({ id: '', nombre: '', rut: '', direccion: '', contacto: '' })}>Limpiar</button>
-            </div>
-            {formMsg && <div style={{ fontSize: 12, marginTop: 8, color: formMsg.ok ? '#007A75' : '#A0005A' }}>{formMsg.text}</div>}
+            <button className="btn-teal" style={{ width: '100%', marginTop: 10 }} onClick={registrar}>Registrar Beneficiario</button>
+            {formMsg && <div style={{ fontSize: 12, marginTop: 10, textAlign: 'center', color: formMsg.ok ? '#007A75' : '#A0005A' }}>{formMsg.text}</div>}
           </div>
         )}
       </div>
 
+      {/* Modal de Edición */}
       {editCard && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 100 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 100 }}>
           <div style={{ background: 'white', borderRadius: 12, padding: '1.5rem', width: '100%', maxWidth: 400 }}>
-            <div style={{ fontSize: 15, fontWeight: 500, marginBottom: '1rem' }}>Editar tarjeta — {editCard.id}</div>
-            {[['nombre','Nombre'],['rut','RUT'],['direccion','Dirección'],['contacto','Contacto']].map(([k,l]) => (
-              <div key={k} style={{ marginBottom: 10 }}>
-                <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>{l}</div>
-                <input value={editCard[k] || ''} onChange={e => setEditCard({ ...editCard, [k]: e.target.value })} />
-              </div>
-            ))}
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>Estado</div>
-              <select value={editCard.estado} onChange={e => setEditCard({ ...editCard, estado: e.target.value })}>
-                <option value="habilitada">Habilitada</option>
-                <option value="inhabilitada">Inhabilitada</option>
-                <option value="bloqueada">Bloqueada</option>
-              </select>
-            </div>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: '1rem' }}>Editar: {editCard.id}</div>
+            <input value={editCard.nombre} onChange={e => setEditCard({...editCard, nombre: e.target.value})} style={{ marginBottom: 10 }} />
+            <select value={editCard.estado} onChange={e => setEditCard({...editCard, estado: e.target.value})} style={{ marginBottom: 15 }}>
+              <option value="habilitada">Habilitada</option>
+              <option value="inhabilitada">Inhabilitada</option>
+              <option value="bloqueada">Bloqueada</option>
+            </select>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn-teal" onClick={guardarEdicion}>Guardar cambios</button>
-              <button 
-                onClick={eliminarTarjeta} 
-                style={{ 
-                  background: '#FCE8F3', 
-                  color: '#A0005A', 
-                  border: '1px solid #A0005A',
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  cursor: 'pointer'
-                }}
-              >
-                Eliminar
-              </button>
-              <button onClick={() => setEditCard(null)}>Cancelar</button>
+              <button className="btn-teal" onClick={guardarEdicion}>Guardar</button>
+              <button onClick={eliminarTarjeta} style={{ background: '#FCE8F3', color: '#A0005A', border: '1px solid #A0005A' }}>Eliminar</button>
+              <button onClick={() => setEditCard(null)} style={{ background: '#eee' }}>Cerrar</button>
             </div>
           </div>
         </div>
