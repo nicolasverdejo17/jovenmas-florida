@@ -9,7 +9,7 @@ export default function ComerciosPage() {
     async function fetchComercios() {
       const { data } = await supabase
         .from('comercios')
-        .select('nombre, categoria, descuento')
+        .select('nombre, categoria, descuento, direccion, sector')
         .eq('estado', 'activo')
         .order('nombre', { ascending: true })
       setComercios(data || [])
@@ -34,12 +34,15 @@ export default function ComerciosPage() {
         </div>
       </div>
  
+      {/* Banner */}
+      <div style={{ background: 'rgba(255,255,255,0.15)', margin: '0 1rem 20px', borderRadius: 16, padding: '14px 16px', textAlign: 'center' }}>
+        <div style={{ color: 'white', fontSize: 13, fontWeight: 600 }}>
+          🎉 Presenta tu tarjeta Joven+ en estos locales y accede a descuentos exclusivos
+        </div>
+      </div>
+ 
       {/* Contenido */}
       <div style={{ flex: 1, padding: '0 1rem 2rem' }}>
-        <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 16, padding: '16px', marginBottom: 20, textAlign: 'center' }}>
-          <div style={{ color: 'white', fontSize: 13, fontWeight: 600 }}>Presenta tu tarjeta Joven+ en estos locales y accede a descuentos exclusivos</div>
-        </div>
- 
         {loading && (
           <div style={{ textAlign: 'center', color: 'white', padding: '3rem', fontSize: 14 }}>Cargando comercios...</div>
         )}
@@ -49,18 +52,36 @@ export default function ComerciosPage() {
         )}
  
         {comercios.map((c, idx) => (
-          <div key={idx} style={{ background: 'white', borderRadius: 14, padding: '16px 20px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 15 }}>
-            <div style={{ width: 48, height: 48, borderRadius: '50%', background: idx % 2 === 0 ? '#00B5AD' : '#D63D8F', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 800, flexShrink: 0 }}>
-              {(c.nombre[0] || '').toUpperCase()}
+          <div key={idx} style={{ background: 'white', borderRadius: 16, padding: '18px 20px', marginBottom: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              {/* Avatar */}
+              <div style={{ width: 50, height: 50, borderRadius: '50%', background: idx % 2 === 0 ? '#00B5AD' : '#D63D8F', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 900, flexShrink: 0 }}>
+                {(c.nombre[0] || '').toUpperCase()}
+              </div>
+ 
+              {/* Info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 17, fontWeight: 800, color: '#222' }}>{c.nombre}</div>
+                <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{c.categoria || 'Local colaborador'}</div>
+              </div>
+ 
+              {/* Descuento destacado */}
+              <div style={{ background: 'linear-gradient(135deg, #D63D8F, #a0005a)', borderRadius: 14, padding: '10px 16px', textAlign: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(214,61,143,0.3)' }}>
+                <div style={{ fontSize: 32, fontWeight: 900, color: 'white', lineHeight: 1 }}>{c.descuento}%</div>
+                <div style={{ fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,0.8)', letterSpacing: 1 }}>DESCUENTO</div>
+              </div>
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 16, fontWeight: 800, color: '#222' }}>{c.nombre}</div>
-              <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{c.categoria || 'Local colaborador'}</div>
-            </div>
-            <div style={{ textAlign: 'center', flexShrink: 0 }}>
-              <div style={{ fontSize: 28, fontWeight: 900, color: '#D63D8F', lineHeight: 1 }}>{c.descuento}%</div>
-              <div style={{ fontSize: 9, fontWeight: 800, color: '#aaa' }}>DESCUENTO</div>
-            </div>
+ 
+            {/* Ubicación */}
+            {(c.direccion || c.sector) && (
+              <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #f0f0f0', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                <span style={{ fontSize: 14, flexShrink: 0 }}>📍</span>
+                <div>
+                  {c.direccion && <div style={{ fontSize: 13, color: '#444', fontWeight: 600 }}>{c.direccion}</div>}
+                  {c.sector && <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{c.sector}</div>}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
