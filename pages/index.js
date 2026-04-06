@@ -90,6 +90,23 @@ export default function Home() {
     if (!error) { setEditCard(null); fetchCards() }
   }
 
+  async function eliminarTarjeta() {
+    const confirmar = confirm(`¿Estás seguro de que deseas eliminar la tarjeta de ${editCard.nombre}? Esta acción no se puede deshacer.`)
+    if (confirmar) {
+      const { error } = await supabase
+        .from('tarjetas')
+        .delete()
+        .eq('id', editCard.id)
+
+      if (error) {
+        alert("Error al eliminar: " + error.message)
+      } else {
+        setEditCard(null)
+        fetchCards()
+      }
+    }
+  }
+
   const filtered = cards.filter(c =>
     c.nombre.toLowerCase().includes(search.toLowerCase()) ||
     c.rut.toLowerCase().includes(search.toLowerCase()) ||
@@ -253,6 +270,21 @@ export default function Home() {
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn-teal" onClick={guardarEdicion}>Guardar cambios</button>
+              <button 
+                onClick={eliminarTarjeta} 
+                style={{ 
+                  background: '#FCE8F3', 
+                  color: '#A0005A', 
+                  border: '1px solid #A0005A',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Eliminar
+              </button>
               <button onClick={() => setEditCard(null)}>Cancelar</button>
             </div>
           </div>
