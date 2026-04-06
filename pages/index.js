@@ -19,8 +19,8 @@ function Badge({ estado }) {
   }
   const s = map[estado] || map.inhabilitada
   return (
-    <span style={{ background: s.bg, color: s.color, padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 500 }}>
-      {s.label}
+    <span style={{ background: s.bg, color: s.color, padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 600, whiteSpace: 'nowrap' }}>
+      {s.label.toUpperCase()}
     </span>
   )
 }
@@ -37,8 +37,6 @@ export default function Home() {
   const [editCard, setEditCard] = useState(null)
   const [formMsg, setFormMsg] = useState(null)
   const [form, setForm] = useState({ id: '', nombre: '', rut: '', direccion: '', contacto: '' })
-  
-  // Estado para la selección múltiple
   const [selectedIds, setSelectedIds] = useState([])
 
   useEffect(() => { if (user) fetchCards() }, [user])
@@ -47,7 +45,7 @@ export default function Home() {
     setLoading(true)
     const { data } = await supabase.from('tarjetas').select('*').order('creado_en', { ascending: false })
     setCards(data || [])
-    setSelectedIds([]) // Limpiar selección al recargar
+    setSelectedIds([])
     setLoading(false)
   }
 
@@ -60,55 +58,32 @@ export default function Home() {
     }
   }
 
-  // Manejo de checkboxes
   const toggleSelect = (id) => {
-    setSelectedIds(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    )
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
   }
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === filtered.length) {
-      setSelectedIds([])
-    } else {
-      setSelectedIds(filtered.map(c => c.id))
-    }
+    if (selectedIds.length === filtered.length) setSelectedIds([])
+    else setSelectedIds(filtered.map(c => c.id))
   }
 
-  // Acción masiva (Inhabilitar o Bloquear grupo)
   async function updateBulkStatus(nuevoEstado) {
-    const confirmar = confirm(`¿Cambiar el estado de ${selectedIds.length} tarjetas a "${nuevoEstado}"?`)
+    const confirmar = confirm(`¿Cambiar estado a "${nuevoEstado}" para ${selectedIds.length} tarjetas?`)
     if (!confirmar) return
-
-    const { error } = await supabase
-      .from('tarjetas')
-      .update({ estado: nuevoEstado })
-      .in('id', selectedIds)
-
-    if (error) {
-      alert("Error en actualización masiva: " + error.message)
-    } else {
-      fetchCards()
-    }
+    const { error } = await supabase.from('tarjetas').update({ estado: nuevoEstado }).in('id', selectedIds)
+    if (error) alert("Error: " + error.message)
+    else fetchCards()
   }
 
   async function registrar() {
     if (!form.id || !form.nombre || !form.rut) {
-      setFormMsg({ ok: false, text: 'ID, nombre y RUT son obligatorios.' })
+      setFormMsg({ ok: false, text: 'ID, nombre y RUT obligatorios.' })
       return
     }
-    const { error } = await supabase.from('tarjetas').insert({
-      id: form.id.trim(),
-      nombre: form.nombre.trim(),
-      rut: form.rut.trim(),
-      direccion: form.direccion.trim(),
-      contacto: form.contacto.trim(),
-      estado: 'habilitada',
-    })
-    if (error) {
-      setFormMsg({ ok: false, text: error.code === '23505' ? 'Ese ID ya existe.' : 'Error al registrar.' })
-    } else {
-      setFormMsg({ ok: true, text: 'Tarjeta registrada y habilitada correctamente.' })
+    const { error } = await supabase.from('tarjetas').insert({ ...form, estado: 'habilitada' })
+    if (error) setFormMsg({ ok: false, text: error.code === '23505' ? 'ID ya existe.' : 'Error.' })
+    else {
+      setFormMsg({ ok: true, text: 'Registrado con éxito.' })
       setForm({ id: '', nombre: '', rut: '', direccion: '', contacto: '' })
       fetchCards()
       setTimeout(() => setFormMsg(null), 2500)
@@ -116,22 +91,14 @@ export default function Home() {
   }
 
   async function guardarEdicion() {
-    const { error } = await supabase.from('tarjetas').update({
-      nombre: editCard.nombre,
-      rut: editCard.rut,
-      direccion: editCard.direccion,
-      contacto: editCard.contacto,
-      estado: editCard.estado,
-    }).eq('id', editCard.id)
+    const { error } = await supabase.from('tarjetas').update(editCard).eq('id', editCard.id)
     if (!error) { setEditCard(null); fetchCards() }
   }
 
   async function eliminarTarjeta() {
-    const confirmar = confirm(`¿Estás seguro de que deseas eliminar la tarjeta de ${editCard.nombre}?`)
-    if (confirmar) {
+    if (confirm(`¿Eliminar permanentemente a ${editCard.nombre}?`)) {
       const { error } = await supabase.from('tarjetas').delete().eq('id', editCard.id)
-      if (error) alert("Error al eliminar: " + error.message)
-      else { setEditCard(null); fetchCards() }
+      if (!error) { setEditCard(null); fetchCards() }
     }
   }
 
@@ -141,152 +108,160 @@ export default function Home() {
     c.id.toLowerCase().includes(search.toLowerCase())
   )
 
-  const habilitadas = cards.filter(c => c.estado === 'habilitada').length
-  const bloqueadas = cards.filter(c => c.estado === 'bloqueada').length
+  const stats = {
+    total: cards.length,
+    hab: cards.filter(c => c.estado === 'habilitada').length,
+    inh: cards.filter(c => c.estado === 'inhabilitada').length,
+    bloq: cards.filter(c => c.estado === 'bloqueada').length,
+  }
 
   if (!user) return (
-    <div style={{ minHeight: '100vh', background: '#f9f9f9' }}>
-      {/* Header simple para Login */}
-      <div style={{ background: '#00B5AD', padding: '14px 1rem', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 32, height: 32, background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 4 L12 20 L21 4" stroke="#00B5AD" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="20" r="3" fill="#D63D8F"/></svg>
+    <div style={{ minHeight: '100vh', background: '#f9f9f9', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+        <div style={{ background: 'white', padding: '2rem', borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', width: '100%', maxWidth: 350 }}>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ width: 50, height: 50, background: '#00B5AD', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 4 L12 20 L21 4" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="20" r="3" fill="#D63D8F"/></svg>
+                </div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#333' }}>Joven+ Florida</div>
+            </div>
+            <input value={loginUser} onChange={e => setLoginUser(e.target.value)} placeholder="Usuario" style={{ marginBottom: 12 }} />
+            <input type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="Contraseña" style={{ marginBottom: 12 }} onKeyDown={e => e.key === 'Enter' && doLogin()} />
+            {loginErr && <div style={{ fontSize: 12, color: '#A0005A', marginBottom: 12, textAlign: 'center' }}>Credenciales incorrectas</div>}
+            <button className="btn-teal" style={{ width: '100%' }} onClick={doLogin}>Entrar al Panel</button>
         </div>
-        <div>
-          <div style={{ color: 'white', fontSize: 15, fontWeight: 500 }}>Joven+ Florida</div>
-          <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11 }}>Panel Municipal</div>
-        </div>
-      </div>
-      <div style={{ maxWidth: 360, margin: '3rem auto', padding: '0 1rem' }}>
-        <div style={{ fontSize: 22, fontWeight: 500, marginBottom: 4 }}>Iniciar sesión</div>
-        <div style={{ width: 36, height: 3, background: '#D63D8F', borderRadius: 2, marginBottom: '1.5rem' }}></div>
-        <input value={loginUser} onChange={e => setLoginUser(e.target.value)} placeholder="Usuario" style={{ marginBottom: 10 }} />
-        <input type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="Contraseña" style={{ marginBottom: 10 }} onKeyDown={e => e.key === 'Enter' && doLogin()} />
-        {loginErr && <div style={{ fontSize: 12, color: '#A0005A', marginBottom: 8 }}>Datos incorrectos.</div>}
-        <button className="btn-teal" style={{ width: '100%' }} onClick={doLogin}>Ingresar</button>
-      </div>
     </div>
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f9f9f9' }}>
-      {/* Header Principal */}
-      <div style={{ background: '#00B5AD', padding: '14px 1rem', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 32, height: 32, background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 4 L12 20 L21 4" stroke="#00B5AD" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="20" r="3" fill="#D63D8F"/></svg>
+    <div style={{ minHeight: '100vh', background: '#f8f9fa' }}>
+      <div style={{ background: '#00B5AD', padding: '12px 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 28, height: 28, background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 4 L12 20 L21 4" stroke="#00B5AD" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="20" r="3" fill="#D63D8F"/></svg>
+            </div>
+            <span style={{ color: 'white', fontWeight: 600, fontSize: 15 }}>Joven+ Florida</span>
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ color: 'white', fontSize: 15, fontWeight: 500 }}>Joven+ Florida</div>
-        </div>
-        <button className="btn-sm" onClick={() => setUser(null)} style={{ fontSize: 11 }}>Salir</button>
+        <button className="btn-sm" onClick={() => setUser(null)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white' }}>Salir</button>
       </div>
 
-      <div style={{ display: 'flex', borderBottom: '1px solid #eee', background: 'white' }}>
+      <div style={{ display: 'flex', background: 'white', borderBottom: '1px solid #eee' }}>
         {['resumen', 'registro'].map((t, i) => (
           <button key={t} onClick={() => setTab(t)} style={{
-            flex: 1, padding: '12px', fontSize: 13, fontWeight: 500,
-            color: tab === t ? '#00B5AD' : '#888', background: 'transparent',
-            border: 'none', borderBottom: tab === t ? '2px solid #00B5AD' : '2px solid transparent'
-          }}>{['Lista de Tarjetas', 'Nuevo Registro'][i]}</button>
+            flex: 1, padding: '14px', fontSize: 13, fontWeight: 600, border: 'none', background: 'none',
+            color: tab === t ? '#00B5AD' : '#888', borderBottom: tab === t ? '3px solid #00B5AD' : '3px solid transparent'
+          }}>{['LISTA DE TARJETAS', 'NUEVO REGISTRO'][i]}</button>
         ))}
       </div>
 
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '1rem' }}>
+      <div style={{ maxWidth: 750, margin: '0 auto', padding: '1rem' }}>
         {tab === 'resumen' && (
           <>
-            {/* Estadísticas */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: '1rem' }}>
-              <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-                <div style={{ fontSize: 20, fontWeight: 600, color: '#444' }}>{cards.length}</div>
-                <div style={{ fontSize: 10, color: '#888', textTransform: 'uppercase' }}>Total</div>
-              </div>
-              <div style={{ background: '#E0F7F6', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-                <div style={{ fontSize: 20, fontWeight: 600, color: '#007A75' }}>{habilitadas}</div>
-                <div style={{ fontSize: 10, color: '#007A75', textTransform: 'uppercase' }}>Habilitadas</div>
-              </div>
-              <div style={{ background: '#FCE8F3', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-                <div style={{ fontSize: 20, fontWeight: 600, color: '#A0005A' }}>{bloqueadas}</div>
-                <div style={{ fontSize: 10, color: '#A0005A', textTransform: 'uppercase' }}>Bloqueadas</div>
-              </div>
+            {/* Estadísticas de 4 columnas */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: '1.5rem' }}>
+              {[
+                { label: 'TOTAL', val: stats.total, color: '#444', bg: 'white' },
+                { label: 'HAB.', val: stats.hab, color: '#007A75', bg: '#E0F7F6' },
+                { label: 'INH.', val: stats.inh, color: '#6B8500', bg: '#F2F9D6' },
+                { label: 'BLOQ.', val: stats.bloq, color: '#A0005A', bg: '#FCE8F3' }
+              ].map(s => (
+                <div key={s.label} style={{ background: s.bg, border: '1px solid rgba(0,0,0,0.05)', borderRadius: 10, padding: '10px 5px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: s.color }}>{s.val}</div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: s.color, opacity: 0.8 }}>{s.label}</div>
+                </div>
+              ))}
             </div>
 
-            {/* Buscador */}
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, RUT o ID..." style={{ marginBottom: 12 }} />
+            <div style={{ position: 'relative', marginBottom: 15 }}>
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, RUT o ID..." style={{ paddingLeft: 35 }} />
+                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#999' }}>🔍</span>
+            </div>
 
-            {/* Barra de Acciones Masivas (Solo aparece si hay seleccionados) */}
             {selectedIds.length > 0 && (
-              <div style={{ background: '#333', color: 'white', padding: '10px 15px', borderRadius: 8, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10, animation: 'slideIn 0.3s' }}>
-                <span style={{ fontSize: 13, flex: 1 }}>{selectedIds.length} seleccionados</span>
-                <button className="btn-sm" onClick={() => updateBulkStatus('habilitada')} style={{ background: '#00B5AD', border: 'none' }}>Habilitar</button>
-                <button className="btn-sm" onClick={() => updateBulkStatus('inhabilitada')} style={{ background: '#888', border: 'none' }}>Inhabilitar</button>
-                <button className="btn-sm" onClick={() => updateBulkStatus('bloqueada')} style={{ background: '#D63D8F', border: 'none' }}>Bloquear</button>
-                <button onClick={() => setSelectedIds([])} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: 18, cursor: 'pointer' }}>×</button>
+              <div style={{ background: '#333', color: 'white', padding: '12px', borderRadius: 12, marginBottom: 15, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, flex: 1 }}>{selectedIds.length} seleccionados</span>
+                <button className="btn-sm" onClick={() => updateBulkStatus('habilitada')} style={{ background: '#007A75', fontSize: 10 }}>Habilitar</button>
+                <button className="btn-sm" onClick={() => updateBulkStatus('inhabilitada')} style={{ background: '#6B8500', fontSize: 10 }}>Inhabilitar</button>
+                <button className="btn-sm" onClick={() => updateBulkStatus('bloqueada')} style={{ background: '#A0005A', fontSize: 10 }}>Bloquear</button>
+                <button onClick={() => setSelectedIds([])} style={{ background: 'none', border: 'none', color: 'white', fontSize: 20, marginLeft: 5 }}>×</button>
               </div>
             )}
 
-            {/* Cabecera de Lista */}
-            <div style={{ display: 'flex', alignItems: 'center', padding: '0 12px 8px', gap: 10 }}>
-                <input type="checkbox" checked={selectedIds.length === filtered.length && filtered.length > 0} onChange={toggleSelectAll} style={{ cursor: 'pointer' }} />
-                <span style={{ fontSize: 11, color: '#888', fontWeight: 600 }}>SELECCIONAR TODO</span>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '0 10px 10px', gap: 10 }}>
+                <input type="checkbox" checked={selectedIds.length === filtered.length && filtered.length > 0} onChange={toggleSelectAll} style={{ width: 18, height: 18 }} />
+                <span style={{ fontSize: 11, color: '#888', fontWeight: 700 }}>SELECCIONAR TODOS LOS RESULTADOS</span>
             </div>
 
-            {loading && <div style={{ textAlign: 'center', padding: '2rem' }}>Cargando...</div>}
-            
-            {filtered.map(c => (
-              <div key={c.id} style={{ 
-                background: 'white', border: '1px solid #eee', borderRadius: 8, padding: '10px 12px', marginBottom: 8, 
-                display: 'flex', alignItems: 'center', gap: 10,
-                opacity: c.estado === 'inhabilitada' ? 0.6 : 1 // Visualizador de inhabilitadas
-              }}>
-                <input type="checkbox" checked={selectedIds.includes(c.id)} onChange={() => toggleSelect(c.id)} />
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#eee', color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>
-                  {initials(c.nombre)}
+            {loading ? <div style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>Cargando datos...</div> : 
+              filtered.map(c => (
+                <div key={c.id} style={{ 
+                  background: 'white', border: '1px solid #eee', borderRadius: 12, padding: '12px', marginBottom: 8, 
+                  display: 'flex', alignItems: 'center', gap: 12, transition: '0.2s',
+                  opacity: c.estado === 'inhabilitada' ? 0.5 : 1
+                }}>
+                  <input type="checkbox" checked={selectedIds.includes(c.id)} onChange={() => toggleSelect(c.id)} style={{ width: 18, height: 18, flexShrink: 0 }} />
+                  
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f0f2f5', color: '#555', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                    {initials(c.nombre)}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#333', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.nombre}</div>
+                    <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{c.id} • {c.rut}</div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                    <Badge estado={c.estado} />
+                    <button className="btn-magenta" onClick={() => setEditCard({ ...c })} style={{ padding: '6px 12px', fontSize: 11 }}>Editar</button>
+                  </div>
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>{c.nombre}</div>
-                  <div style={{ fontSize: 11, color: '#888' }}>{c.id} · {c.rut}</div>
-                </div>
-                <Badge estado={c.estado} />
-                <button className="btn-magenta" onClick={() => setEditCard({ ...c })}>Editar</button>
-              </div>
-            ))}
+              ))
+            }
           </>
         )}
 
         {tab === 'registro' && (
-          <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 12, padding: '1.5rem' }}>
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>ID Tarjeta Física</div>
-              <input value={form.id} onChange={e => setForm({ ...form, id: e.target.value })} placeholder="Ej: JM-001" />
+          <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 16, padding: '2rem', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+            <h3 style={{ marginTop: 0, marginBottom: 20, fontSize: 18 }}>Nuevo Beneficiario</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15 }}>
+                <div style={{ marginBottom: 15 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#666' }}>ID TARJETA</label>
+                    <input value={form.id} onChange={e => setForm({ ...form, id: e.target.value.toUpperCase() })} placeholder="JM-000" />
+                </div>
+                <div style={{ marginBottom: 15 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: '#666' }}>RUT</label>
+                    <input value={form.rut} onChange={e => setForm({ ...form, rut: e.target.value })} placeholder="12.345.678-9" />
+                </div>
             </div>
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>Nombre Completo</div>
-              <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} />
+            <div style={{ marginBottom: 15 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: '#666' }}>NOMBRE COMPLETO</label>
+                <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} placeholder="Nombre y Apellidos" />
             </div>
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>RUT</div>
-              <input value={form.rut} onChange={e => setForm({ ...form, rut: e.target.value })} placeholder="12.345.678-9" />
-            </div>
-            <button className="btn-teal" style={{ width: '100%', marginTop: 10 }} onClick={registrar}>Registrar Beneficiario</button>
-            {formMsg && <div style={{ fontSize: 12, marginTop: 10, textAlign: 'center', color: formMsg.ok ? '#007A75' : '#A0005A' }}>{formMsg.text}</div>}
+            <button className="btn-teal" style={{ width: '100%', padding: '14px', fontSize: 14, marginTop: 10 }} onClick={registrar}>Registrar y Habilitar</button>
+            {formMsg && <div style={{ fontSize: 13, marginTop: 15, textAlign: 'center', fontWeight: 600, color: formMsg.ok ? '#007A75' : '#A0005A' }}>{formMsg.text}</div>}
           </div>
         )}
       </div>
 
-      {/* Modal de Edición */}
       {editCard && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 100 }}>
-          <div style={{ background: 'white', borderRadius: 12, padding: '1.5rem', width: '100%', maxWidth: 400 }}>
-            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: '1rem' }}>Editar: {editCard.id}</div>
-            <input value={editCard.nombre} onChange={e => setEditCard({...editCard, nombre: e.target.value})} style={{ marginBottom: 10 }} />
-            <select value={editCard.estado} onChange={e => setEditCard({...editCard, estado: e.target.value})} style={{ marginBottom: 15 }}>
-              <option value="habilitada">Habilitada</option>
-              <option value="inhabilitada">Inhabilitada</option>
-              <option value="bloqueada">Bloqueada</option>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 100, backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: 'white', borderRadius: 16, padding: '2rem', width: '100%', maxWidth: 400, boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>Editar Beneficiario</div>
+            <label style={{ fontSize: 11, fontWeight: 700, color: '#999' }}>NOMBRE</label>
+            <input value={editCard.nombre} onChange={e => setEditCard({...editCard, nombre: e.target.value})} style={{ marginBottom: 15 }} />
+            
+            <label style={{ fontSize: 11, fontWeight: 700, color: '#999' }}>ESTADO DE TARJETA</label>
+            <select value={editCard.estado} onChange={e => setEditCard({...editCard, estado: e.target.value})} style={{ marginBottom: 20, padding: '10px', width: '100%', borderRadius: 8, border: '1px solid #ddd' }}>
+              <option value="habilitada">HABILITADA</option>
+              <option value="inhabilitada">INHABILITADA</option>
+              <option value="bloqueada">BLOQUEADA</option>
             </select>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn-teal" onClick={guardarEdicion}>Guardar</button>
-              <button onClick={eliminarTarjeta} style={{ background: '#FCE8F3', color: '#A0005A', border: '1px solid #A0005A' }}>Eliminar</button>
-              <button onClick={() => setEditCard(null)} style={{ background: '#eee' }}>Cerrar</button>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button className="btn-teal" onClick={guardarEdicion}>Guardar Cambios</button>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={eliminarTarjeta} style={{ flex: 1, background: '#fff', color: '#A0005A', border: '1px solid #A0005A' }}>Eliminar</button>
+                <button onClick={() => setEditCard(null)} style={{ flex: 1, background: '#eee', border: 'none' }}>Cancelar</button>
+              </div>
             </div>
           </div>
         </div>
