@@ -21,8 +21,6 @@ function Badge({ estado }) {
     habilitada: { bg: '#E0F7F6', color: '#007A75', label: 'Habilitada' },
     inhabilitada: { bg: '#F2F9D6', color: '#6B8500', label: 'Inhabilitada' },
     bloqueada: { bg: '#FCE8F3', color: '#A0005A', label: 'Bloqueada' },
-    // Agregamos estado para comercios
-    activo: { bg: '#E0F7F6', color: '#007A75', label: 'Activo' },
   }
   const s = map[estado] || map.inhabilitada
   return (
@@ -46,7 +44,7 @@ export default function Home() {
   const [form, setForm] = useState({ id: '', nombre: '', rut: '', direccion: '', sector: '', contacto: '' })
   const [selectedIds, setSelectedIds] = useState([])
 
-  // --- NUEVOS ESTADOS PARA COMERCIOS (LO QUE PEDISTE) ---
+  // --- NUEVOS ESTADOS PARA COMERCIOS (AGREGADOS SIN TOCAR LO ANTERIOR) ---
   const [comercios, setComercios] = useState([])
   const [editComercio, setEditComercio] = useState(null)
   const [formComercio, setFormComercio] = useState({ nombre: '', categoria: 'Gym', descuento: '' })
@@ -54,7 +52,7 @@ export default function Home() {
   useEffect(() => { 
     if (user) {
       fetchCards()
-      fetchComercios() // Cargar comercios al iniciar
+      fetchComercios() // Nueva llamada
     } 
   }, [user])
 
@@ -66,7 +64,7 @@ export default function Home() {
     setLoading(false)
   }
 
-  // --- NUEVAS FUNCIONES PARA COMERCIOS ---
+  // --- NUEVAS FUNCIONES DE COMERCIOS ---
   async function fetchComercios() {
     const { data } = await supabase.from('comercios').select('*').order('nombre', { ascending: true })
     setComercios(data || [])
@@ -99,7 +97,7 @@ export default function Home() {
     }
   }
 
-  // --- FUNCIONES ORIGINALES INTACTAS ---
+  // --- TODA TU LÓGICA ORIGINAL INTACTA ---
   function doLogin() {
     const u = loginUser.toLowerCase()
     if (USERS[u] && USERS[u].pass === loginPass) {
@@ -152,6 +150,7 @@ export default function Home() {
         estado: editCard.estado,
         observaciones: editCard.observaciones
     }).eq('id', editCard.id)
+    
     if (!error) { setEditCard(null); fetchCards() }
   }
 
@@ -204,7 +203,6 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8f9fa' }}>
-      {/* Header Original */}
       <div style={{ background: '#00B5AD', padding: '12px 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 32, height: 32, background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -218,18 +216,15 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Tabs modificadas solo para incluir Comercios */}
       <div style={{ display: 'flex', background: 'white', borderBottom: '1px solid #eee' }}>
-        {['resumen', 'registro', 'comercios', 'nuevo_comercio'].map((t, i) => (
+        {['resumen', 'registro', 'comercios', 'nuevo_local'].map((t, i) => (
           <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: '16px', fontSize: 11, fontWeight: 800, border: 'none', background: 'none', color: tab === t ? '#00B5AD' : '#bbb', borderBottom: tab === t ? '4px solid #00B5AD' : '4px solid transparent', transition: '0.3s' }}>
-            {['BENEFICIARIOS', 'NUEVO JOVEN+', 'COMERCIOS', 'NUEVO LOCAL'][i]}
+            {['BENEFICIARIOS', 'NUEVO REGISTRO', 'COMERCIOS', 'NUEVO NEGOCIO'][i]}
           </button>
         ))}
       </div>
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '1.5rem' }}>
-        
-        {/* TAB 1: RESUMEN ORIGINAL */}
         {tab === 'resumen' && (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: '2rem' }}>
@@ -242,7 +237,7 @@ export default function Home() {
             </div>
 
             <div style={{ position: 'relative', marginBottom: 20 }}>
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." style={{ paddingLeft: 40, borderRadius: 12, height: 45 }} />
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, RUT, ID o sector..." style={{ paddingLeft: 40, borderRadius: 12, height: 45 }} />
                 <span style={{ position: 'absolute', left: 15, top: '52%', transform: 'translateY(-50%)', fontSize: 18 }}>🔍</span>
             </div>
 
@@ -251,110 +246,135 @@ export default function Home() {
                 <span style={{ fontSize: 13, fontWeight: 700, flex: 1 }}>{selectedIds.length} seleccionados</span>
                 <button className="btn-sm" onClick={() => updateBulkStatus('habilitada')} style={{ background: '#00B5AD' }}>Habilitar</button>
                 <button className="btn-sm" onClick={() => updateBulkStatus('inhabilitada')} style={{ background: '#6B8500' }}>Inhabilitar</button>
-                <button onClick={() => setSelectedIds([])} style={{ background: 'none', border: 'none', color: 'white', fontSize: 24 }}>×</button>
+                <button onClick={() => setSelectedIds([])} style={{ background: 'none', border: 'none', color: 'white', fontSize: 24, marginLeft: 5 }}>×</button>
               </div>
             )}
 
-            {loading ? <div style={{ textAlign: 'center', padding: '4rem', color: '#aaa' }}>Cargando...</div> : 
+            <div style={{ display: 'flex', alignItems: 'center', padding: '0 10px 12px', gap: 12 }}>
+                <input type="checkbox" checked={selectedIds.length === filtered.length && filtered.length > 0} onChange={toggleSelectAll} style={{ width: 20, height: 20 }} />
+                <span style={{ fontSize: 11, color: '#999', fontWeight: 800 }}>SELECCIONAR TODOS</span>
+            </div>
+
+            {loading ? <div style={{ textAlign: 'center', padding: '4rem', color: '#aaa', fontWeight: 600 }}>Cargando datos...</div> : 
               filtered.map((c, idx) => (
                 <div key={c.id} style={{ background: 'white', border: '1px solid #eee', borderRadius: 14, padding: '15px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 15 }}>
                   <input type="checkbox" checked={selectedIds.includes(c.id)} onChange={() => toggleSelect(c.id)} style={{ width: 20, height: 20 }} />
                   <div style={{ width: 44, height: 44, borderRadius: '50%', background: AVATAR_COLORS[idx % 3], color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800 }}>{initials(c.nombre)}</div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700 }}>{c.nombre}</div>
-                    <div style={{ fontSize: 11, color: '#888' }}>ID: {c.id}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#333' }}>{c.nombre}</div>
+                    <div style={{ fontSize: 11, color: '#888', marginTop: 3 }}>ID: <b>{c.id}</b> • {c.sector || 'Sin sector'}</div>
                   </div>
-                  <Badge estado={c.estado} />
-                  <button className="btn-magenta" onClick={() => setEditCard({ ...c })} style={{ padding: '8px 15px', fontSize: 11 }}>VER</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <Badge estado={c.estado} />
+                    <button className="btn-magenta" onClick={() => setEditCard({ ...c })} style={{ padding: '8px 15px', fontSize: 11, fontWeight: 700 }}>VER / EDITAR</button>
+                  </div>
                 </div>
               ))
             }
           </>
         )}
 
-        {/* TAB 2: REGISTRO JOVEN+ ORIGINAL */}
         {tab === 'registro' && (
           <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 20, padding: '2.5rem' }}>
-            <h3 style={{ marginTop: 0, fontWeight: 800 }}>Nuevo Beneficiario</h3>
+            <h3 style={{ marginTop: 0, marginBottom: 25, fontSize: 20, fontWeight: 800 }}>Nuevo Beneficiario</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <input value={form.id} onChange={e => setForm({ ...form, id: e.target.value.toUpperCase() })} placeholder="ID TARJETA" />
-                <input value={form.rut} onChange={e => setForm({ ...form, rut: e.target.value })} placeholder="RUT" />
+                <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>ID TARJETA</label><input value={form.id} onChange={e => setForm({ ...form, id: e.target.value.toUpperCase() })} placeholder="JM-000" /></div>
+                <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>RUT</label><input value={form.rut} onChange={e => setForm({ ...form, rut: e.target.value })} placeholder="12.345.678-9" /></div>
             </div>
-            <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} placeholder="NOMBRE COMPLETO" style={{marginTop: 15}} />
-            <button className="btn-teal" style={{ width: '100%', marginTop: 20, padding: 16 }} onClick={registrar}>REGISTRAR</button>
+            <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>NOMBRE COMPLETO</label><input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} placeholder="Nombre y Apellidos" /></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>DIRECCIÓN</label><input value={form.direccion} onChange={e => setForm({ ...form, direccion: e.target.value })} placeholder="Calle / Pasaje" /></div>
+                <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>SECTOR / VILLA</label><input value={form.sector} onChange={e => setForm({ ...form, sector: e.target.value })} placeholder="Ej: Villa El Prado" /></div>
+            </div>
+            <div style={{ marginBottom: 20 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>CONTACTO</label><input value={form.contacto} onChange={e => setForm({ ...form, contacto: e.target.value })} placeholder="+569 / email" /></div>
+            <button className="btn-teal" style={{ width: '100%', padding: '16px', fontWeight: 700 }} onClick={registrar}>REGISTRAR BENEFICIARIO</button>
             {formMsg && <div style={{ fontSize: 13, marginTop: 20, textAlign: 'center', fontWeight: 700, color: formMsg.ok ? '#007A75' : '#A0005A' }}>{formMsg.text}</div>}
           </div>
         )}
 
-        {/* --- NUEVA TAB 3: LISTADO DE COMERCIOS --- */}
+        {/* --- NUEVA VISTA COMERCIOS (ADICIONAL) --- */}
         {tab === 'comercios' && (
-          <div style={{ display: 'grid', gap: 12 }}>
+          <div style={{ display: 'grid', gap: 15 }}>
             {comercios.map((com) => (
-              <div key={com.id} style={{ background: 'white', padding: 20, borderRadius: 15, display: 'flex', alignItems: 'center', border: '1px solid #eee' }}>
+              <div key={com.id} style={{ background: 'white', padding: 25, borderRadius: 15, display: 'flex', alignItems: 'center', border: '1px solid #eee' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 10, color: '#00B5AD', fontWeight: 800 }}>{com.categoria.toUpperCase()}</div>
                   <div style={{ fontSize: 18, fontWeight: 800 }}>{com.nombre}</div>
                 </div>
-                <div style={{ textAlign: 'right', marginRight: 20 }}>
-                  <div style={{ fontSize: 28, fontWeight: 900, color: '#D63D8F' }}>{com.descuento}%</div>
-                  <div style={{ fontSize: 10, fontWeight: 700 }}>DESCUENTO</div>
+                <div style={{ textAlign: 'center', marginRight: 30 }}>
+                  <div style={{ fontSize: 36, fontWeight: 900, color: '#D63D8F' }}>{com.descuento}%</div>
+                  <div style={{ fontSize: 10, fontWeight: 800 }}>DESC.</div>
                 </div>
-                <button className="btn-magenta" onClick={() => setEditComercio(com)} style={{ padding: '8px 15px' }}>EDITAR</button>
+                <button className="btn-magenta" onClick={() => setEditComercio(com)} style={{ padding: '10px 20px' }}>EDITAR</button>
               </div>
             ))}
           </div>
         )}
 
-        {/* --- NUEVA TAB 4: AGREGAR NEGOCIOS --- */}
-        {tab === 'nuevo_comercio' && (
+        {/* --- NUEVO REGISTRO LOCAL (ADICIONAL) --- */}
+        {tab === 'nuevo_local' && (
           <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 20, padding: '2.5rem' }}>
-            <h3 style={{ marginTop: 0, fontWeight: 800 }}>Agregar Negocio Asociado</h3>
+            <h3 style={{ marginTop: 0, marginBottom: 25, fontWeight: 800 }}>Nuevo Negocio Colaborador</h3>
             <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>NOMBRE DEL LOCAL</label>
-            <input value={formComercio.nombre} onChange={e => setFormComercio({...formComercio, nombre: e.target.value})} placeholder="Ej: Sushi Florida" />
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 15 }}>
+            <input value={formComercio.nombre} onChange={e => setFormComercio({...formComercio, nombre: e.target.value})} placeholder="Sushi, Gym, etc..." style={{marginBottom: 20}} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
               <div>
                 <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>CATEGORÍA</label>
-                <select value={formComercio.categoria} onChange={e => setFormComercio({...formComercio, categoria: e.target.value})} style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #ddd' }}>
+                <select value={formComercio.categoria} onChange={e => setFormComercio({...formComercio, categoria: e.target.value})} style={{width: '100%', padding: 12, borderRadius: 10, border: '1px solid #ddd'}}>
                   <option>Gym</option><option>Minimarket</option><option>Panadería</option><option>Sushi</option>
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>% DESCUENTO (MOSTRAR EN GRANDE)</label>
-                <input type="number" value={formComercio.descuento} onChange={e => setFormComercio({...formComercio, descuento: e.target.value})} placeholder="Ej: 20" />
+                <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>% DESCUENTO</label>
+                <input type="number" value={formComercio.descuento} onChange={e => setFormComercio({...formComercio, descuento: e.target.value})} placeholder="Ej: 15" />
               </div>
             </div>
-            <button className="btn-teal" style={{ width: '100%', marginTop: 25, padding: 16 }} onClick={registrarComercio}>GUARDAR NEGOCIO</button>
+            <button className="btn-teal" style={{ width: '100%', marginTop: 30, padding: 16 }} onClick={registrarComercio}>GUARDAR LOCAL</button>
             {formMsg && <div style={{ fontSize: 13, marginTop: 20, textAlign: 'center', fontWeight: 700, color: formMsg.ok ? '#007A75' : '#A0005A' }}>{formMsg.text}</div>}
           </div>
         )}
       </div>
 
-      {/* MODAL ORIGINAL DE BENEFICIARIO INTACTO */}
+      {/* --- MODAL ORIGINAL DE EDICIÓN BENEFICIARIO (INTACTO) --- */}
       {editCard && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 100, backdropFilter: 'blur(5px)' }}>
-          <div style={{ background: 'white', borderRadius: 20, padding: '2.5rem', width: '100%', maxWidth: 500 }}>
-            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 25 }}>Ficha del Beneficiario</div>
-            <input value={editCard.nombre} onChange={e => setEditCard({...editCard, nombre: e.target.value})} placeholder="Nombre" />
-            <div style={{ display: 'flex', gap: 10, marginTop: 15 }}>
-              <button className="btn-teal" onClick={guardarEdicion} style={{flex: 1, padding: 14}}>GUARDAR</button>
-              <button onClick={() => setEditCard(null)} style={{flex: 1, background: '#eee', border: 'none', borderRadius: 10}}>CERRAR</button>
+          <div style={{ background: 'white', borderRadius: 20, padding: '2.5rem', width: '100%', maxWidth: 500, maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 25, borderBottom: '2px solid #f0f0f0', paddingBottom: 15 }}>Ficha del Beneficiario</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginBottom: 15 }}>
+                <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>RUT</label><input value={editCard.rut} onChange={e => setEditCard({...editCard, rut: e.target.value})} /></div>
+                <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>ESTADO</label><select value={editCard.estado} onChange={e => setEditCard({...editCard, estado: e.target.value})} style={{ padding: '10px', width: '100%', borderRadius: 10, border: '1px solid #ddd' }}><option value="habilitada">HABILITADA</option><option value="inhabilitada">INHABILITADA</option><option value="bloqueada">BLOQUEADA</option></select></div>
+            </div>
+            <div style={{ marginBottom: 15 }}><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>NOMBRE</label><input value={editCard.nombre} onChange={e => setEditCard({...editCard, nombre: e.target.value})} /></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginBottom: 15 }}>
+                <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>DIRECCIÓN</label><input value={editCard.direccion || ''} onChange={e => setEditCard({...editCard, direccion: e.target.value})} /></div>
+                <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>SECTOR</label><input value={editCard.sector || ''} onChange={e => setEditCard({...editCard, sector: e.target.value})} /></div>
+            </div>
+            <div style={{ marginBottom: 25 }}>
+                <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>OBSERVACIONES</label>
+                <textarea value={editCard.observaciones || ''} onChange={e => setEditCard({...editCard, observaciones: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid #ddd', height: 80, fontSize: 13, fontFamily: 'inherit' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <button className="btn-teal" onClick={guardarEdicion} style={{ padding: '14px' }}>GUARDAR CAMBIOS</button>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={eliminarTarjeta} style={{ flex: 1, background: '#fff', color: '#A0005A', border: '1px solid #A0005A', fontWeight: 700, borderRadius: 10 }}>ELIMINAR</button>
+                <button onClick={() => setEditCard(null)} style={{ flex: 1, background: '#f0f0f0', border: 'none', fontWeight: 700, borderRadius: 10 }}>CERRAR</button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* NUEVO MODAL PARA EDITAR COMERCIOS */}
+      {/* --- NUEVO MODAL EDITAR COMERCIO (ADICIONAL) --- */}
       {editComercio && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 100, backdropFilter: 'blur(5px)' }}>
-          <div style={{ background: 'white', borderRadius: 20, padding: '2.5rem', width: '100%', maxWidth: 500 }}>
-            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 25 }}>Editar Negocio</div>
-            <input value={editComercio.nombre} onChange={e => setEditComercio({...editComercio, nombre: e.target.value})} placeholder="Nombre" />
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 100 }}>
+          <div style={{ background: 'white', borderRadius: 20, padding: '2.5rem', width: '100%', maxWidth: 450 }}>
+            <h3>Editar Comercio</h3>
+            <input value={editComercio.nombre} onChange={e => setEditComercio({...editComercio, nombre: e.target.value})} />
             <input type="number" value={editComercio.descuento} onChange={e => setEditComercio({...editComercio, descuento: e.target.value})} style={{marginTop: 15}} />
             <div style={{ display: 'flex', gap: 10, marginTop: 25 }}>
-              <button className="btn-teal" onClick={guardarEdicionComercio} style={{flex: 1, padding: 14}}>GUARDAR CAMBIOS</button>
-              <button onClick={eliminarComercio} style={{flex: 1, background: '#fff', border: '1px solid red', color: 'red', borderRadius: 10}}>ELIMINAR</button>
-              <button onClick={() => setEditComercio(null)} style={{flex: 1, background: '#eee', border: 'none', borderRadius: 10}}>CANCELAR</button>
+              <button className="btn-teal" onClick={guardarEdicionComercio} style={{flex: 1}}>GUARDAR</button>
+              <button onClick={eliminarComercio} style={{flex: 1, color: 'red', border: '1px solid red', borderRadius: 10, background: 'white'}}>ELIMINAR</button>
+              <button onClick={() => setEditComercio(null)} style={{flex: 1, background: '#eee', border: 'none', borderRadius: 10}}>CERRAR</button>
             </div>
           </div>
         </div>
