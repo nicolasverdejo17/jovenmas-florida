@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-
+ 
 // Usuarios actualizados
 const USERS = {
   admin: { pass: 'admin123', label: 'Administrador' },
@@ -8,14 +8,14 @@ const USERS = {
   nverdejo: { pass: 'Joven+', label: 'Nicolás Verdejo' },
   jparra: { pass: 'Joven+', label: 'Javiera Parra' }
 }
-
+ 
 const AVATAR_COLORS = ['#00B5AD', '#6B8500', '#D63D8F'] 
-
+ 
 function initials(name) {
   const parts = name.trim().split(' ')
   return ((parts[0] || '')[0] || '').toUpperCase() + ((parts[1] || '')[0] || '').toUpperCase()
 }
-
+ 
 function Badge({ estado }) {
   const map = {
     habilitada: { bg: '#E0F7F6', color: '#007A75', label: 'Habilitada' },
@@ -29,7 +29,7 @@ function Badge({ estado }) {
     </span>
   )
 }
-
+ 
 export default function Home() {
   const [user, setUser] = useState(null)
   const [loginUser, setLoginUser] = useState('')
@@ -43,9 +43,9 @@ export default function Home() {
   const [formMsg, setFormMsg] = useState(null)
   const [form, setForm] = useState({ id: '', nombre: '', rut: '', direccion: '', sector: '', contacto: '' })
   const [selectedIds, setSelectedIds] = useState([])
-
+ 
   useEffect(() => { if (user) fetchCards() }, [user])
-
+ 
   async function fetchCards() {
     setLoading(true)
     const { data } = await supabase.from('tarjetas').select('*').order('creado_en', { ascending: false })
@@ -53,7 +53,7 @@ export default function Home() {
     setSelectedIds([])
     setLoading(false)
   }
-
+ 
   function doLogin() {
     const u = loginUser.toLowerCase()
     if (USERS[u] && USERS[u].pass === loginPass) {
@@ -63,16 +63,16 @@ export default function Home() {
       setLoginErr(true)
     }
   }
-
+ 
   const toggleSelect = (id) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
   }
-
+ 
   const toggleSelectAll = () => {
     if (selectedIds.length === filtered.length && filtered.length > 0) setSelectedIds([])
     else setSelectedIds(filtered.map(c => c.id))
   }
-
+ 
   async function updateBulkStatus(nuevoEstado) {
     const confirmar = confirm(`¿Cambiar estado a "${nuevoEstado}" para ${selectedIds.length} tarjetas?`)
     if (!confirmar) return
@@ -80,7 +80,7 @@ export default function Home() {
     if (error) alert("Error: " + error.message)
     else fetchCards()
   }
-
+ 
   async function registrar() {
     if (!form.id || !form.nombre || !form.rut) {
       setFormMsg({ ok: false, text: 'ID, nombre y RUT son obligatorios.' })
@@ -95,7 +95,7 @@ export default function Home() {
       setTimeout(() => setFormMsg(null), 2500)
     }
   }
-
+ 
   async function guardarEdicion() {
     const { error } = await supabase.from('tarjetas').update({
         nombre: editCard.nombre,
@@ -104,32 +104,33 @@ export default function Home() {
         sector: editCard.sector,
         contacto: editCard.contacto,
         estado: editCard.estado,
-        observaciones: editCard.observaciones // CORREGIDO: Ahora sí se guardan
+        observaciones: editCard.observaciones
     }).eq('id', editCard.id)
     
     if (!error) { setEditCard(null); fetchCards() }
   }
-
+ 
   async function eliminarTarjeta() {
     if (confirm(`¿Eliminar permanentemente a ${editCard.nombre}?`)) {
       const { error } = await supabase.from('tarjetas').delete().eq('id', editCard.id)
       if (!error) { setEditCard(null); fetchCards() }
     }
   }
-
+ 
   const filtered = cards.filter(c =>
     c.nombre.toLowerCase().includes(search.toLowerCase()) ||
     c.rut.toLowerCase().includes(search.toLowerCase()) ||
-    c.id.toLowerCase().includes(search.toLowerCase())
+    c.id.toLowerCase().includes(search.toLowerCase()) ||
+    (c.sector || '').toLowerCase().includes(search.toLowerCase())
   )
-
+ 
   const stats = {
     total: cards.length,
     hab: cards.filter(c => c.estado === 'habilitada').length,
     inh: cards.filter(c => c.estado === 'inhabilitada').length,
     bloq: cards.filter(c => c.estado === 'bloqueada').length,
   }
-
+ 
   if (!user) return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(-45deg, #00B5AD, #6B8500, #008a84, #4e6100)', backgroundSize: '400% 400%', animation: 'gradientBG 15s ease infinite', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
         <style>{`@keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }`}</style>
@@ -155,7 +156,7 @@ export default function Home() {
         </div>
     </div>
   )
-
+ 
   return (
     <div style={{ minHeight: '100vh', background: '#f8f9fa' }}>
       <div style={{ background: '#00B5AD', padding: '12px 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
@@ -170,7 +171,7 @@ export default function Home() {
           <button className="btn-sm" onClick={() => setUser(null)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px 15px' }}>Cerrar Sesión</button>
         </div>
       </div>
-
+ 
       <div style={{ display: 'flex', background: 'white', borderBottom: '1px solid #eee' }}>
         {['resumen', 'registro'].map((t, i) => (
           <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: '16px', fontSize: 12, fontWeight: 800, border: 'none', background: 'none', color: tab === t ? '#00B5AD' : '#bbb', borderBottom: tab === t ? '4px solid #00B5AD' : '4px solid transparent', transition: '0.3s' }}>
@@ -178,7 +179,7 @@ export default function Home() {
           </button>
         ))}
       </div>
-
+ 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '1.5rem' }}>
         {tab === 'resumen' && (
           <>
@@ -190,13 +191,12 @@ export default function Home() {
                 </div>
               ))}
             </div>
-
+ 
             <div style={{ position: 'relative', marginBottom: 20 }}>
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, RUT o ID..." style={{ paddingLeft: 40, borderRadius: 12, height: 45 }} />
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nombre, RUT, ID o sector..." style={{ paddingLeft: 40, borderRadius: 12, height: 45 }} />
                 <span style={{ position: 'absolute', left: 15, top: '52%', transform: 'translateY(-50%)', fontSize: 18 }}>🔍</span>
             </div>
-
-            {/* BARRA DE ACCIONES MASIVAS RESTAURADA */}
+ 
             {selectedIds.length > 0 && (
               <div style={{ background: '#222', color: 'white', padding: '14px 20px', borderRadius: 14, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, flex: 1 }}>{selectedIds.length} seleccionados</span>
@@ -206,13 +206,12 @@ export default function Home() {
                 <button onClick={() => setSelectedIds([])} style={{ background: 'none', border: 'none', color: 'white', fontSize: 24, marginLeft: 5 }}>×</button>
               </div>
             )}
-
-            {/* SELECCIONAR TODO RESTAURADO */}
+ 
             <div style={{ display: 'flex', alignItems: 'center', padding: '0 10px 12px', gap: 12 }}>
                 <input type="checkbox" checked={selectedIds.length === filtered.length && filtered.length > 0} onChange={toggleSelectAll} style={{ width: 20, height: 20 }} />
                 <span style={{ fontSize: 11, color: '#999', fontWeight: 800 }}>SELECCIONAR TODOS</span>
             </div>
-
+ 
             {loading ? <div style={{ textAlign: 'center', padding: '4rem', color: '#aaa', fontWeight: 600 }}>Cargando datos...</div> : 
               filtered.map((c, idx) => (
                 <div key={c.id} style={{ background: 'white', border: '1px solid #eee', borderRadius: 14, padding: '15px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 15, transition: '0.2s', opacity: c.estado === 'inhabilitada' ? 0.6 : 1 }}>
@@ -231,7 +230,7 @@ export default function Home() {
             }
           </>
         )}
-
+ 
         {tab === 'registro' && (
           <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 20, padding: '2.5rem' }}>
             <h3 style={{ marginTop: 0, marginBottom: 25, fontSize: 20, fontWeight: 800 }}>Nuevo Beneficiario</h3>
@@ -250,7 +249,7 @@ export default function Home() {
           </div>
         )}
       </div>
-
+ 
       {editCard && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 100, backdropFilter: 'blur(5px)' }}>
           <div style={{ background: 'white', borderRadius: 20, padding: '2.5rem', width: '100%', maxWidth: 500, maxHeight: '90vh', overflowY: 'auto' }}>
