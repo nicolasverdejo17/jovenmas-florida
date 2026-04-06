@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 
+// Usuarios actualizados según tu solicitud
 const USERS = {
   admin: { pass: 'admin123', label: 'Administrador' },
   equipo: { pass: 'equipo123', label: 'Equipo' },
+  nverdejo: { pass: 'Joven+', label: 'Nicolás Verdejo' },
+  jparra: { pass: 'Joven+', label: 'Javiera Parra' }
 }
 
-// Colores institucionales para los avatares
-const AVATAR_COLORS = ['#00B5AD', '#6B8500'] 
+const AVATAR_COLORS = ['#00B5AD', '#6B8500', '#D63D8F'] 
 
 function initials(name) {
   const parts = name.trim().split(' ')
@@ -39,7 +41,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [editCard, setEditCard] = useState(null)
   const [formMsg, setFormMsg] = useState(null)
-  const [form, setForm] = useState({ id: '', nombre: '', rut: '', direccion: '', contacto: '' })
+  // Se añade 'sector' al estado inicial del formulario
+  const [form, setForm] = useState({ id: '', nombre: '', rut: '', direccion: '', sector: '', contacto: '' })
   const [selectedIds, setSelectedIds] = useState([])
 
   useEffect(() => { if (user) fetchCards() }, [user])
@@ -53,8 +56,10 @@ export default function Home() {
   }
 
   function doLogin() {
-    if (USERS[loginUser] && USERS[loginUser].pass === loginPass) {
-      setUser({ name: loginUser, label: USERS[loginUser].label })
+    // Normalizamos el login para que sea insensible a mayúsculas en el nombre de usuario
+    const u = loginUser.toLowerCase()
+    if (USERS[u] && USERS[u].pass === loginPass) {
+      setUser({ name: u, label: USERS[u].label })
       setLoginErr(false)
     } else {
       setLoginErr(true)
@@ -83,26 +88,35 @@ export default function Home() {
       setFormMsg({ ok: false, text: 'ID, nombre y RUT son obligatorios.' })
       return
     }
+    // Combinamos dirección y sector si es necesario, o enviamos por separado si tu tabla tiene la columna
     const { error } = await supabase.from('tarjetas').insert({ ...form, estado: 'habilitada' })
     if (error) setFormMsg({ ok: false, text: 'Error al registrar. Verifique si el ID ya existe.' })
     else {
       setFormMsg({ ok: true, text: 'Beneficiario registrado correctamente.' })
-      setForm({ id: '', nombre: '', rut: '', direccion: '', contacto: '' })
+      setForm({ id: '', nombre: '', rut: '', direccion: '', sector: '', contacto: '' })
       fetchCards()
       setTimeout(() => setFormMsg(null), 2500)
     }
   }
 
   async function guardarEdicion() {
+    // IMPORTANTE: Aseguramos que 'observaciones' esté incluido en el objeto de actualización
     const { error } = await supabase.from('tarjetas').update({
         nombre: editCard.nombre,
         rut: editCard.rut,
         direccion: editCard.direccion,
+        sector: editCard.sector, // Se añade sector a la edición
         contacto: editCard.contacto,
         estado: editCard.estado,
-        observaciones: editCard.observaciones
+        observaciones: editCard.observaciones 
     }).eq('id', editCard.id)
-    if (!error) { setEditCard(null); fetchCards() }
+    
+    if (!error) { 
+      setEditCard(null)
+      fetchCards() 
+    } else {
+      alert("Error al guardar: " + error.message)
+    }
   }
 
   async function eliminarTarjeta() {
@@ -173,7 +187,6 @@ export default function Home() {
                     </svg>
                 </div>
                 <div style={{ fontSize: 26, fontWeight: 900, color: '#333', letterSpacing: '-1px' }}>Joven+ Florida</div>
-                <div style={{ width: '40px', height: '4px', background: '#6B8500', margin: '10px auto', borderRadius: '2px' }}></div>
             </div>
 
             <div style={{ textAlign: 'left' }}>
@@ -181,7 +194,7 @@ export default function Home() {
               <input 
                 value={loginUser} 
                 onChange={e => setLoginUser(e.target.value)} 
-                placeholder="Ingresa tu usuario" 
+                placeholder="nverdejo / jparra / admin" 
                 style={{ marginBottom: 18, marginTop: 5, borderRadius: 12, border: '1px solid #eee', background: '#f8f9fa' }} 
               />
               
@@ -217,10 +230,7 @@ export default function Home() {
       {/* Header */}
       <div style={{ background: '#00B5AD', padding: '12px 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 32, height: 32, background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 4 L12 20 L21 4" stroke="#00B5AD" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="20" r="3" fill="#D63D8F"/></svg>
-            </div>
-            <span style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>Joven+ Florida</span>
+            <span style={{ color: 'white', fontWeight: 700, fontSize: 16 }}>Joven+ Florida | {user.label}</span>
         </div>
         <button className="btn-sm" onClick={() => setUser(null)} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '6px 15px' }}>Cerrar Sesión</button>
       </div>
@@ -260,22 +270,6 @@ export default function Home() {
                 <span style={{ position: 'absolute', left: 15, top: '52%', transform: 'translateY(-50%)', fontSize: 18 }}>🔍</span>
             </div>
 
-            {/* Acciones Masivas */}
-            {selectedIds.length > 0 && (
-              <div style={{ background: '#222', color: 'white', padding: '14px 20px', borderRadius: 14, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, flex: 1 }}>{selectedIds.length} seleccionados</span>
-                <button className="btn-sm" onClick={() => updateBulkStatus('habilitada')} style={{ background: '#00B5AD' }}>Habilitar</button>
-                <button className="btn-sm" onClick={() => updateBulkStatus('inhabilitada')} style={{ background: '#6B8500' }}>Inhabilitar</button>
-                <button className="btn-sm" onClick={() => updateBulkStatus('bloqueada')} style={{ background: '#D63D8F' }}>Bloquear</button>
-                <button onClick={() => setSelectedIds([])} style={{ background: 'none', border: 'none', color: 'white', fontSize: 24, marginLeft: 5 }}>×</button>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', alignItems: 'center', padding: '0 10px 12px', gap: 12 }}>
-                <input type="checkbox" checked={selectedIds.length === filtered.length && filtered.length > 0} onChange={toggleSelectAll} style={{ width: 20, height: 20 }} />
-                <span style={{ fontSize: 11, color: '#999', fontWeight: 800 }}>SELECCIONAR TODOS</span>
-            </div>
-
             {/* Lista */}
             {loading ? <div style={{ textAlign: 'center', padding: '4rem', color: '#aaa', fontWeight: 600 }}>Cargando datos...</div> : 
               filtered.map((c, idx) => (
@@ -297,7 +291,7 @@ export default function Home() {
 
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#333' }}>{c.nombre}</div>
-                    <div style={{ fontSize: 11, color: '#888', marginTop: 3 }}>ID: <b>{c.id}</b> • RUT: {c.rut}</div>
+                    <div style={{ fontSize: 11, color: '#888', marginTop: 3 }}>ID: <b>{c.id}</b> • {c.sector || 'Sin sector'}</div>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
@@ -332,13 +326,18 @@ export default function Home() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <div style={{ marginBottom: 15 }}>
-                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>DIRECCIÓN</label>
-                    <input value={form.direccion} onChange={e => setForm({ ...form, direccion: e.target.value })} placeholder="Villa / Calle" />
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>DIRECCIÓN (CALLE/PASAJE)</label>
+                    <input value={form.direccion} onChange={e => setForm({ ...form, direccion: e.target.value })} placeholder="Ej: Las Palmas 123" />
                 </div>
-                <div style={{ marginBottom: 20 }}>
-                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>CONTACTO</label>
-                    <input value={form.contacto} onChange={e => setForm({ ...form, contacto: e.target.value })} placeholder="+569 / email" />
+                <div style={{ marginBottom: 15 }}>
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>SECTOR / VILLA</label>
+                    <input value={form.sector} onChange={e => setForm({ ...form, sector: e.target.value })} placeholder="Ej: Villa El Prado" />
                 </div>
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+                <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>CONTACTO</label>
+                <input value={form.contacto} onChange={e => setForm({ ...form, contacto: e.target.value })} placeholder="+569 / email" />
             </div>
 
             <button className="btn-teal" style={{ width: '100%', padding: '16px', fontWeight: 700 }} onClick={registrar}>REGISTRAR BENEFICIARIO</button>
@@ -372,9 +371,15 @@ export default function Home() {
                 <input value={editCard.nombre} onChange={e => setEditCard({...editCard, nombre: e.target.value})} />
             </div>
 
-            <div style={{ marginBottom: 15 }}>
-                <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>DIRECCIÓN</label>
-                <input value={editCard.direccion || ''} onChange={e => setEditCard({...editCard, direccion: e.target.value})} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginBottom: 15 }}>
+                <div>
+                    <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>DIRECCIÓN</label>
+                    <input value={editCard.direccion || ''} onChange={e => setEditCard({...editCard, direccion: e.target.value})} />
+                </div>
+                <div>
+                    <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>SECTOR</label>
+                    <input value={editCard.sector || ''} onChange={e => setEditCard({...editCard, sector: e.target.value})} />
+                </div>
             </div>
 
             <div style={{ marginBottom: 15 }}>
