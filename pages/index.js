@@ -100,7 +100,7 @@ export default function Home() {
         direccion: editCard.direccion,
         contacto: editCard.contacto,
         estado: editCard.estado,
-        observaciones: editCard.observaciones // Guardar las notas
+        observaciones: editCard.observaciones
     }).eq('id', editCard.id)
     if (!error) { setEditCard(null); fetchCards() }
   }
@@ -126,19 +126,88 @@ export default function Home() {
   }
 
   if (!user) return (
-    <div style={{ minHeight: '100vh', background: '#f9f9f9', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-        <div style={{ background: 'white', padding: '2.5rem', borderRadius: 20, boxShadow: '0 10px 30px rgba(0,0,0,0.08)', width: '100%', maxWidth: 360 }}>
-            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                <div style={{ width: 60, height: 60, background: '#00B5AD', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', boxShadow: '0 4px 10px rgba(0,181,173,0.3)' }}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M3 4 L12 20 L21 4" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="20" r="3" fill="#D63D8F"/></svg>
+    <div style={{ 
+      minHeight: '100vh', 
+      background: 'linear-gradient(-45deg, #00B5AD, #6B8500, #008a84, #4e6100)',
+      backgroundSize: '400% 400%',
+      animation: 'gradientBG 15s ease infinite',
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      padding: '1rem' 
+    }}>
+        <style>{`
+          @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+        `}</style>
+        
+        <div style={{ 
+          background: 'rgba(255, 255, 255, 0.95)', 
+          backdropFilter: 'blur(10px)',
+          padding: '3rem 2.5rem', 
+          borderRadius: 28, 
+          boxShadow: '0 20px 40px rgba(0,0,0,0.2)', 
+          width: '100%', 
+          maxWidth: 380,
+          textAlign: 'center'
+        }}>
+            <div style={{ marginBottom: '2.5rem' }}>
+                <div style={{ 
+                  width: 70, 
+                  height: 70, 
+                  background: '#00B5AD', 
+                  borderRadius: '22px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  margin: '0 auto 18px', 
+                  boxShadow: '0 8px 15px rgba(0,181,173,0.3)',
+                  transform: 'rotate(-5deg)'
+                }}>
+                    <svg width="35" height="35" viewBox="0 0 24 24" fill="none">
+                      <path d="M3 4 L12 20 L21 4" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="12" cy="20" r="3" fill="#D63D8F"/>
+                    </svg>
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 800, color: '#333', letterSpacing: '-0.5px' }}>Joven+ Florida</div>
-                <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>GESTIÓN MUNICIPAL</div>
+                <div style={{ fontSize: 26, fontWeight: 900, color: '#333', letterSpacing: '-1px' }}>Joven+ Florida</div>
+                <div style={{ width: '40px', height: '4px', background: '#6B8500', margin: '10px auto', borderRadius: '2px' }}></div>
             </div>
-            <input value={loginUser} onChange={e => setLoginUser(e.target.value)} placeholder="Usuario" style={{ marginBottom: 12 }} />
-            <input type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="Contraseña" style={{ marginBottom: 15 }} onKeyDown={e => e.key === 'Enter' && doLogin()} />
-            {loginErr && <div style={{ fontSize: 12, color: '#A0005A', marginBottom: 15, textAlign: 'center', fontWeight: 600 }}>Usuario o clave incorrecta</div>}
-            <button className="btn-teal" style={{ width: '100%', padding: '12px' }} onClick={doLogin}>Iniciar Sesión</button>
+
+            <div style={{ textAlign: 'left' }}>
+              <label style={{ fontSize: 11, fontWeight: 800, color: '#999', marginLeft: 5 }}>USUARIO</label>
+              <input 
+                value={loginUser} 
+                onChange={e => setLoginUser(e.target.value)} 
+                placeholder="Ingresa tu usuario" 
+                style={{ marginBottom: 18, marginTop: 5, borderRadius: 12, border: '1px solid #eee', background: '#f8f9fa' }} 
+              />
+              
+              <label style={{ fontSize: 11, fontWeight: 800, color: '#999', marginLeft: 5 }}>CONTRASEÑA</label>
+              <input 
+                type="password" 
+                value={loginPass} 
+                onChange={e => setLoginPass(e.target.value)} 
+                placeholder="••••••••" 
+                style={{ marginBottom: 20, marginTop: 5, borderRadius: 12, border: '1px solid #eee', background: '#f8f9fa' }} 
+                onKeyDown={e => e.key === 'Enter' && doLogin()} 
+              />
+            </div>
+
+            {loginErr && (
+              <div style={{ 
+                fontSize: 12, color: '#A0005A', marginBottom: 20, textAlign: 'center', fontWeight: 700,
+                background: '#FCE8F3', padding: '8px', borderRadius: '8px'
+              }}>
+                Credenciales incorrectas
+              </div>
+            )}
+
+            <button className="btn-teal" style={{ width: '100%', padding: '16px', borderRadius: 14, fontSize: 15, fontWeight: 800 }} onClick={doLogin}>
+              ACCEDER AL PANEL
+            </button>
         </div>
     </div>
   )
@@ -178,7 +247,7 @@ export default function Home() {
                 { label: 'INHABILIT.', val: stats.inh, color: '#6B8500', bg: '#F2F9D6' },
                 { label: 'BLOQ.', val: stats.bloq, color: '#A0005A', bg: '#FCE8F3' }
               ].map(s => (
-                <div key={s.label} style={{ background: s.bg, border: '1px solid rgba(0,0,0,0.03)', borderRadius: 12, padding: '12px 5px', textAlign: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.02)' }}>
+                <div key={s.label} style={{ background: s.bg, border: '1px solid rgba(0,0,0,0.03)', borderRadius: 12, padding: '12px 5px', textAlign: 'center' }}>
                   <div style={{ fontSize: 20, fontWeight: 900, color: s.color }}>{s.val}</div>
                   <div style={{ fontSize: 9, fontWeight: 800, color: s.color, opacity: 0.7 }}>{s.label}</div>
                 </div>
@@ -193,12 +262,12 @@ export default function Home() {
 
             {/* Acciones Masivas */}
             {selectedIds.length > 0 && (
-              <div style={{ background: '#222', color: 'white', padding: '14px 20px', borderRadius: 14, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 8px 20px rgba(0,0,0,0.15)' }}>
+              <div style={{ background: '#222', color: 'white', padding: '14px 20px', borderRadius: 14, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, flex: 1 }}>{selectedIds.length} seleccionados</span>
                 <button className="btn-sm" onClick={() => updateBulkStatus('habilitada')} style={{ background: '#00B5AD' }}>Habilitar</button>
                 <button className="btn-sm" onClick={() => updateBulkStatus('inhabilitada')} style={{ background: '#6B8500' }}>Inhabilitar</button>
                 <button className="btn-sm" onClick={() => updateBulkStatus('bloqueada')} style={{ background: '#D63D8F' }}>Bloquear</button>
-                <button onClick={() => setSelectedIds([])} style={{ background: 'none', border: 'none', color: 'white', fontSize: 24, marginLeft: 5, cursor: 'pointer' }}>×</button>
+                <button onClick={() => setSelectedIds([])} style={{ background: 'none', border: 'none', color: 'white', fontSize: 24, marginLeft: 5 }}>×</button>
               </div>
             )}
 
@@ -208,22 +277,20 @@ export default function Home() {
             </div>
 
             {/* Lista */}
-            {loading ? <div style={{ textAlign: 'center', padding: '4rem', color: '#aaa', fontWeight: 600 }}>Cargando base de datos...</div> : 
+            {loading ? <div style={{ textAlign: 'center', padding: '4rem', color: '#aaa', fontWeight: 600 }}>Cargando datos...</div> : 
               filtered.map((c, idx) => (
                 <div key={c.id} style={{ 
                   background: 'white', border: '1px solid #eee', borderRadius: 14, padding: '15px', marginBottom: 10, 
                   display: 'flex', alignItems: 'center', gap: 15, transition: '0.2s',
-                  opacity: c.estado === 'inhabilitada' ? 0.6 : 1,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                  opacity: c.estado === 'inhabilitada' ? 0.6 : 1
                 }}>
                   <input type="checkbox" checked={selectedIds.includes(c.id)} onChange={() => toggleSelect(c.id)} style={{ width: 20, height: 20, flexShrink: 0 }} />
                   
-                  {/* Círculo con iniciales de color dinámico */}
                   <div style={{ 
                     width: 44, height: 44, borderRadius: '50%', 
-                    background: AVATAR_COLORS[idx % AVATAR_COLORS.length], // Alterna colores
+                    background: AVATAR_COLORS[idx % AVATAR_COLORS.length], 
                     color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                    fontSize: 14, fontWeight: 800, flexShrink: 0, boxShadow: '0 3px 6px rgba(0,0,0,0.1)'
+                    fontSize: 14, fontWeight: 800, flexShrink: 0 
                   }}>
                     {initials(c.nombre)}
                   </div>
@@ -244,47 +311,46 @@ export default function Home() {
         )}
 
         {tab === 'registro' && (
-          <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 20, padding: '2.5rem', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
-            <h3 style={{ marginTop: 0, marginBottom: 25, fontSize: 20, fontWeight: 800, color: '#333' }}>Registro de Nuevo Beneficiario</h3>
+          <div style={{ background: 'white', border: '1px solid #eee', borderRadius: 20, padding: '2.5rem' }}>
+            <h3 style={{ marginTop: 0, marginBottom: 25, fontSize: 20, fontWeight: 800 }}>Nuevo Beneficiario</h3>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <div style={{ marginBottom: 15 }}>
-                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666', display: 'block', marginBottom: 6 }}>ID TARJETA FÍSICA</label>
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>ID TARJETA</label>
                     <input value={form.id} onChange={e => setForm({ ...form, id: e.target.value.toUpperCase() })} placeholder="JM-000" />
                 </div>
                 <div style={{ marginBottom: 15 }}>
-                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666', display: 'block', marginBottom: 6 }}>RUT</label>
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>RUT</label>
                     <input value={form.rut} onChange={e => setForm({ ...form, rut: e.target.value })} placeholder="12.345.678-9" />
                 </div>
             </div>
 
             <div style={{ marginBottom: 15 }}>
-                <label style={{ fontSize: 11, fontWeight: 800, color: '#666', display: 'block', marginBottom: 6 }}>NOMBRE COMPLETO</label>
-                <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} placeholder="Ej: Juan Pérez González" />
+                <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>NOMBRE COMPLETO</label>
+                <input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} placeholder="Nombre y Apellidos" />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <div style={{ marginBottom: 15 }}>
-                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666', display: 'block', marginBottom: 6 }}>DIRECCIÓN</label>
-                    <input value={form.direccion} onChange={e => setForm({ ...form, direccion: e.target.value })} placeholder="Calle, Villa, Número" />
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>DIRECCIÓN</label>
+                    <input value={form.direccion} onChange={e => setForm({ ...form, direccion: e.target.value })} placeholder="Villa / Calle" />
                 </div>
                 <div style={{ marginBottom: 20 }}>
-                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666', display: 'block', marginBottom: 6 }}>CONTACTO (TEL/EMAIL)</label>
+                    <label style={{ fontSize: 11, fontWeight: 800, color: '#666' }}>CONTACTO</label>
                     <input value={form.contacto} onChange={e => setForm({ ...form, contacto: e.target.value })} placeholder="+569 / email" />
                 </div>
             </div>
 
-            <button className="btn-teal" style={{ width: '100%', padding: '16px', fontSize: 15, fontWeight: 700, marginTop: 10, borderRadius: 12 }} onClick={registrar}>REGISTRAR BENEFICIARIO</button>
+            <button className="btn-teal" style={{ width: '100%', padding: '16px', fontWeight: 700 }} onClick={registrar}>REGISTRAR BENEFICIARIO</button>
             {formMsg && <div style={{ fontSize: 13, marginTop: 20, textAlign: 'center', fontWeight: 700, color: formMsg.ok ? '#007A75' : '#A0005A' }}>{formMsg.text}</div>}
           </div>
         )}
       </div>
 
-      {/* Modal de Edición Extendido */}
       {editCard && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 100, backdropFilter: 'blur(5px)' }}>
-          <div style={{ background: 'white', borderRadius: 20, padding: '2.5rem', width: '100%', maxWidth: 500, boxShadow: '0 20px 50px rgba(0,0,0,0.3)', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 25, color: '#333', borderBottom: '2px solid #f0f0f0', paddingBottom: 15 }}>Ficha del Beneficiario</div>
+          <div style={{ background: 'white', borderRadius: 20, padding: '2.5rem', width: '100%', maxWidth: 500, maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 25, borderBottom: '2px solid #f0f0f0', paddingBottom: 15 }}>Ficha del Beneficiario</div>
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginBottom: 15 }}>
                 <div>
@@ -293,7 +359,7 @@ export default function Home() {
                 </div>
                 <div>
                     <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>ESTADO</label>
-                    <select value={editCard.estado} onChange={e => setEditCard({...editCard, estado: e.target.value})} style={{ padding: '10px', width: '100%', borderRadius: 10, border: '1px solid #ddd', fontWeight: 600 }}>
+                    <select value={editCard.estado} onChange={e => setEditCard({...editCard, estado: e.target.value})} style={{ padding: '10px', width: '100%', borderRadius: 10, border: '1px solid #ddd' }}>
                         <option value="habilitada">HABILITADA</option>
                         <option value="inhabilitada">INHABILITADA</option>
                         <option value="bloqueada">BLOQUEADA</option>
@@ -302,7 +368,7 @@ export default function Home() {
             </div>
 
             <div style={{ marginBottom: 15 }}>
-                <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>NOMBRE COMPLETO</label>
+                <label style={{ fontSize: 10, fontWeight: 800, color: '#999' }}>NOMBRE</label>
                 <input value={editCard.nombre} onChange={e => setEditCard({...editCard, nombre: e.target.value})} />
             </div>
 
@@ -321,7 +387,7 @@ export default function Home() {
                 <textarea 
                     value={editCard.observaciones || ''} 
                     onChange={e => setEditCard({...editCard, observaciones: e.target.value})} 
-                    placeholder="Escriba aquí notas internas sobre este joven..."
+                    placeholder="Notas internas..."
                     style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid #ddd', height: 80, fontSize: 13, fontFamily: 'inherit' }}
                 />
             </div>
