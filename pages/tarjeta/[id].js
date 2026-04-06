@@ -7,23 +7,34 @@ function initials(name) {
   return ((parts[0] || '')[0] || '').toUpperCase() + ((parts[1] || '')[0] || '').toUpperCase()
 }
 
+function decodeId(token) {
+  try {
+    return atob(token.split('').reverse().join(''))
+  } catch {
+    return null
+  }
+}
+
 export default function TarjetaPage() {
   const router = useRouter()
-  const { id } = router.query
+  const { id: token } = router.query
   const [card, setCard] = useState(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
-    if (!id) return
+    if (!token) return
+    const realId = decodeId(token)
+    if (!realId) { setNotFound(true); setLoading(false); return }
+
     async function fetch() {
-      const { data } = await supabase.from('tarjetas').select('*').eq('id', id).single()
+      const { data } = await supabase.from('tarjetas').select('id, nombre, rut, estado').eq('id', realId).single()
       if (data) setCard(data)
       else setNotFound(true)
       setLoading(false)
     }
     fetch()
-  }, [id])
+  }, [token])
 
   const estadoMap = {
     habilitada: { bg: '#E0F7F6', color: '#007A75', dot: '#00B5AD', label: 'Habilitada' },
@@ -54,7 +65,7 @@ export default function TarjetaPage() {
             <>
               <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#FCE8F3', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontSize: 24 }}>?</div>
               <div style={{ fontSize: 16, fontWeight: 500, color: '#222' }}>Tarjeta no encontrada</div>
-              <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>El ID <strong>{id}</strong> no está registrado en el sistema.</div>
+              <div style={{ fontSize: 13, color: '#888', marginTop: 4 }}>Esta tarjeta no está registrada en el sistema.</div>
             </>
           )}
 
@@ -71,10 +82,6 @@ export default function TarjetaPage() {
                 <div style={{ background: s.bg, borderRadius: 20, padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.dot, flexShrink: 0 }}></div>
                   <span style={{ color: s.color, fontWeight: 500, fontSize: 15 }}>{s.label}</span>
-                </div>
-                <div style={{ borderTop: '1px solid #eee', marginTop: 14, paddingTop: 12 }}>
-                  <div style={{ fontSize: 12, color: '#888' }}>{card.direccion}</div>
-                  <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{card.contacto}</div>
                 </div>
               </>
             )
