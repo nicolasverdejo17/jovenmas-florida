@@ -47,7 +47,7 @@ export default function Home() {
   const [searchComercio, setSearchComercio] = useState('')
   const [selectedComercios, setSelectedComercios] = useState([])
   const [editComercio, setEditComercio] = useState(null)
-  const [formComercio, setFormComercio] = useState({ nombre: '', categoria: '', descuento: '', direccion: '', sector: '' })
+  const [formComercio, setFormComercio] = useState({ nombre: '', categoria: '', descuento: '', direccion: '', sector: '', maps_url: '' })
   const [formMsgComercio, setFormMsgComercio] = useState(null)
   const [loadingComercios, setLoadingComercios] = useState(false)
 
@@ -139,7 +139,7 @@ export default function Home() {
     if (error) setFormMsgComercio({ ok: false, text: 'Error al registrar comercio.' })
     else {
       setFormMsgComercio({ ok: true, text: 'Comercio registrado correctamente.' })
-      setFormComercio({ nombre: '', categoria: '', descuento: '', direccion: '', sector: '' })
+      setFormComercio({ nombre: '', categoria: '', descuento: '', direccion: '', sector: '', maps_url: '' })
       fetchComercios()
       setTimeout(() => setFormMsgComercio(null), 2500)
     }
@@ -149,7 +149,8 @@ export default function Home() {
     const { error } = await supabase.from('comercios').update({
       nombre: editComercio.nombre, categoria: editComercio.categoria,
       descuento: editComercio.descuento, estado: editComercio.estado,
-      direccion: editComercio.direccion, sector: editComercio.sector
+      direccion: editComercio.direccion, sector: editComercio.sector,
+      maps_url: editComercio.maps_url
     }).eq('id', editComercio.id)
     if (!error) { setEditComercio(null); fetchComercios() }
   }
@@ -175,7 +176,6 @@ export default function Home() {
     (c.sector || '').toLowerCase().includes(search.toLowerCase())
   )
 
-  // ── FILTRO COMERCIOS CON SECTOR ──
   const filteredComercios = comercios.filter(c =>
     c.nombre.toLowerCase().includes(searchComercio.toLowerCase()) ||
     (c.categoria || '').toLowerCase().includes(searchComercio.toLowerCase()) ||
@@ -202,13 +202,14 @@ export default function Home() {
         @media (max-width: 600px) {
           .tabs-bar button { font-size: 9px !important; padding: 12px 4px !important; }
           .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .card-row { flex-wrap: wrap; gap: 10px !important; }
-          .card-row .card-actions { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+          .card-row .card-actions { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+          .card-row { flex-wrap: wrap; }
           .form-grid-2 { grid-template-columns: 1fr !important; }
-          .bulk-bar { flex-wrap: wrap; gap: 8px !important; }
+          .bulk-bar { flex-wrap: wrap; gap: 8px !important; padding: 10px !important; }
           .bulk-bar span { width: 100%; }
           .comercio-row { flex-wrap: wrap; }
           .comercio-row .desc-badge { order: -1; margin-left: auto; }
+          .header-bar span { display: none; }
         }
       `}</style>
       <div style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', padding: '3rem 2rem', borderRadius: 28, boxShadow: '0 20px 40px rgba(0,0,0,0.2)', width: '100%', maxWidth: 380, textAlign: 'center' }}>
@@ -253,12 +254,10 @@ export default function Home() {
           .bulk-bar span { width: 100%; }
           .comercio-row { flex-wrap: wrap; }
           .comercio-row .desc-badge { order: -1; margin-left: auto; }
-          .header-bar { padding: 10px 1rem !important; }
           .header-bar span { display: none; }
         }
       `}</style>
 
-      {/* Header */}
       <div className="header-bar" style={{ background: '#00B5AD', padding: '12px 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 32, height: 32, background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -272,7 +271,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="tabs-bar" style={{ display: 'flex', background: 'white', borderBottom: '1px solid #eee' }}>
         {['beneficiarios', 'registro', 'comercios', 'nuevo_local'].map((t, i) => (
           <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: '14px 4px', fontSize: 11, fontWeight: 800, border: 'none', background: 'none', color: tab === t ? '#00B5AD' : '#bbb', borderBottom: tab === t ? '4px solid #00B5AD' : '4px solid transparent', transition: '0.3s', cursor: 'pointer' }}>
@@ -313,7 +311,7 @@ export default function Home() {
             </div>
             {loading ? <div style={{ textAlign: 'center', padding: '4rem', color: '#aaa', fontWeight: 600 }}>Cargando datos...</div> :
               filtered.map((c, idx) => (
-                <div key={c.id} className="card-row" style={{ background: 'white', border: '1px solid #eee', borderRadius: 14, padding: '14px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 12, transition: '0.2s', opacity: c.estado === 'inhabilitada' ? 0.6 : 1 }}>
+                <div key={c.id} className="card-row" style={{ background: 'white', border: '1px solid #eee', borderRadius: 14, padding: '14px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 12, opacity: c.estado === 'inhabilitada' ? 0.6 : 1 }}>
                   <input type="checkbox" checked={selectedIds.includes(c.id)} onChange={() => toggleSelect(c.id)} style={{ width: 20, height: 20, flexShrink: 0, display: 'inline', padding: 0 }} />
                   <div style={{ width: 42, height: 42, borderRadius: '50%', background: AVATAR_COLORS[idx % AVATAR_COLORS.length], color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, flexShrink: 0 }}>{initials(c.nombre)}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -405,8 +403,13 @@ export default function Home() {
               <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666', display: 'block', marginBottom: 5 }}>% DESCUENTO</label><input type="number" value={formComercio.descuento} onChange={e => setFormComercio({ ...formComercio, descuento: e.target.value })} placeholder="Ej: 15" /></div>
             </div>
             <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15 }}>
-              <div style={{ marginBottom: 20 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666', display: 'block', marginBottom: 5 }}>DIRECCIÓN</label><input value={formComercio.direccion} onChange={e => setFormComercio({ ...formComercio, direccion: e.target.value })} placeholder="Ej: Calle Los Pinos 123" /></div>
-              <div style={{ marginBottom: 20 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666', display: 'block', marginBottom: 5 }}>SECTOR / VILLA</label><input value={formComercio.sector} onChange={e => setFormComercio({ ...formComercio, sector: e.target.value })} placeholder="Ej: Centro, Villa El Prado" /></div>
+              <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666', display: 'block', marginBottom: 5 }}>DIRECCIÓN</label><input value={formComercio.direccion} onChange={e => setFormComercio({ ...formComercio, direccion: e.target.value })} placeholder="Ej: Calle Los Pinos 123" /></div>
+              <div style={{ marginBottom: 15 }}><label style={{ fontSize: 11, fontWeight: 800, color: '#666', display: 'block', marginBottom: 5 }}>SECTOR / VILLA</label><input value={formComercio.sector} onChange={e => setFormComercio({ ...formComercio, sector: e.target.value })} placeholder="Ej: Centro, Villa El Prado" /></div>
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 11, fontWeight: 800, color: '#666', display: 'block', marginBottom: 5 }}>📍 LINK MAPS / WAZE</label>
+              <input value={formComercio.maps_url} onChange={e => setFormComercio({ ...formComercio, maps_url: e.target.value })} placeholder="Pega aquí el link de Google Maps o Waze" />
+              <div style={{ fontSize: 11, color: '#aaa', marginTop: 5 }}>En Google Maps: compartir → copiar enlace. En Waze: compartir ubicación.</div>
             </div>
             <button className="btn-teal" style={{ width: '100%', padding: '16px', fontWeight: 700 }} onClick={registrarComercio}>REGISTRAR LOCAL</button>
             {formMsgComercio && <div style={{ fontSize: 13, marginTop: 16, textAlign: 'center', fontWeight: 700, color: formMsgComercio.ok ? '#007A75' : '#A0005A' }}>{formMsgComercio.text}</div>}
@@ -459,9 +462,13 @@ export default function Home() {
               <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999', display: 'block', marginBottom: 5 }}>CATEGORÍA</label><input value={editComercio.categoria || ''} onChange={e => setEditComercio({ ...editComercio, categoria: e.target.value })} /></div>
               <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999', display: 'block', marginBottom: 5 }}>% DESCUENTO</label><input type="number" value={editComercio.descuento || ''} onChange={e => setEditComercio({ ...editComercio, descuento: e.target.value })} /></div>
             </div>
-            <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginBottom: 20 }}>
+            <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginBottom: 15 }}>
               <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999', display: 'block', marginBottom: 5 }}>DIRECCIÓN</label><input value={editComercio.direccion || ''} onChange={e => setEditComercio({ ...editComercio, direccion: e.target.value })} /></div>
               <div><label style={{ fontSize: 10, fontWeight: 800, color: '#999', display: 'block', marginBottom: 5 }}>SECTOR</label><input value={editComercio.sector || ''} onChange={e => setEditComercio({ ...editComercio, sector: e.target.value })} /></div>
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 10, fontWeight: 800, color: '#999', display: 'block', marginBottom: 5 }}>📍 LINK MAPS / WAZE</label>
+              <input value={editComercio.maps_url || ''} onChange={e => setEditComercio({ ...editComercio, maps_url: e.target.value })} placeholder="Pega aquí el link de Google Maps o Waze" />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button className="btn-teal" onClick={guardarEdicionComercio} style={{ padding: '14px', fontWeight: 700 }}>GUARDAR CAMBIOS</button>
