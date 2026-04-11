@@ -10,7 +10,7 @@ export default function ComerciosPage() {
     async function fetchComercios() {
       const { data } = await supabase
         .from('comercios')
-        .select('nombre, categoria, descuento, direccion, sector')
+        .select('nombre, categoria, descuento, direccion, sector, maps_url')
         .eq('estado', 'activo')
         .order('nombre', { ascending: true })
       setComercios(data || [])
@@ -27,7 +27,7 @@ export default function ComerciosPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#00B5AD', display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
-      
+
       {/* Header */}
       <div style={{ padding: '16px 1rem 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ width: 36, height: 36, background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -59,17 +59,15 @@ export default function ComerciosPage() {
             width: '100%', padding: '13px 16px 13px 42px', borderRadius: 14,
             border: 'none', fontSize: 14, background: 'white',
             boxShadow: '0 2px 12px rgba(0,0,0,0.1)', outline: 'none',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box', fontFamily: 'inherit'
           }}
         />
         <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 18 }}>🔍</span>
       </div>
 
-      {/* Contenido */}
+      {/* Lista */}
       <div style={{ flex: 1, padding: '0 1rem 2rem' }}>
-        {loading && (
-          <div style={{ textAlign: 'center', color: 'white', padding: '3rem', fontSize: 14 }}>Cargando comercios...</div>
-        )}
+        {loading && <div style={{ textAlign: 'center', color: 'white', padding: '3rem', fontSize: 14 }}>Cargando comercios...</div>}
 
         {!loading && filtered.length === 0 && (
           <div style={{ textAlign: 'center', color: 'white', padding: '3rem', fontSize: 14 }}>
@@ -79,19 +77,16 @@ export default function ComerciosPage() {
 
         {filtered.map((c, idx) => (
           <div key={idx} style={{ background: 'white', borderRadius: 16, padding: '18px', marginBottom: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
+            
+            {/* Fila principal */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              {/* Avatar */}
               <div style={{ width: 50, height: 50, borderRadius: '50%', background: idx % 2 === 0 ? '#00B5AD' : '#D63D8F', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 900, flexShrink: 0 }}>
                 {(c.nombre[0] || '').toUpperCase()}
               </div>
-
-              {/* Info */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 16, fontWeight: 800, color: '#222' }}>{c.nombre}</div>
                 <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{c.categoria || 'Local colaborador'}</div>
               </div>
-
-              {/* Descuento */}
               <div style={{ background: 'linear-gradient(135deg, #D63D8F, #a0005a)', borderRadius: 14, padding: '10px 14px', textAlign: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(214,61,143,0.3)' }}>
                 <div style={{ fontSize: 30, fontWeight: 900, color: 'white', lineHeight: 1 }}>{c.descuento}%</div>
                 <div style={{ fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,0.85)', letterSpacing: 1 }}>DESCUENTO</div>
@@ -102,11 +97,30 @@ export default function ComerciosPage() {
             {(c.direccion || c.sector) && (
               <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #f0f0f0', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                 <span style={{ fontSize: 15, flexShrink: 0 }}>📍</span>
-                <div>
+                <div style={{ flex: 1 }}>
                   {c.direccion && <div style={{ fontSize: 13, color: '#444', fontWeight: 600 }}>{c.direccion}</div>}
                   {c.sector && <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{c.sector}</div>}
                 </div>
               </div>
+            )}
+
+            {/* Botón Maps */}
+            {c.maps_url && (
+              <a
+                href={c.maps_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  marginTop: 14, padding: '11px', borderRadius: 12,
+                  background: 'linear-gradient(135deg, #00B5AD, #008a84)',
+                  color: 'white', fontWeight: 700, fontSize: 13,
+                  textDecoration: 'none', boxShadow: '0 3px 10px rgba(0,181,173,0.3)'
+                }}
+              >
+                <span style={{ fontSize: 16 }}>🗺️</span>
+                Cómo llegar
+              </a>
             )}
           </div>
         ))}
