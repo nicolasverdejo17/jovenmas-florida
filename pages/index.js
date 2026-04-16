@@ -31,36 +31,33 @@ function Badge({ estado }) {
 
 function Footer() {
   return (
-    <div style={{ background: '#111', padding: '2rem 1rem 1.5rem', marginTop: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginBottom: 16 }}>
+    <div style={{ background: 'linear-gradient(135deg, #00B5AD, #6B8500)', padding: '1rem 1rem 0.8rem', marginTop: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 10 }}>
         <a href="https://instagram.com/joven_mas_florida" target="_blank" rel="noopener noreferrer"
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
-          <div style={{ width: 44, height: 44, borderRadius: 14, background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="white" strokeWidth="2" fill="none"/>
-              <circle cx="12" cy="12" r="4" stroke="white" strokeWidth="2" fill="none"/>
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textDecoration: 'none' }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="white" strokeWidth="2"/>
+              <circle cx="12" cy="12" r="4" stroke="white" strokeWidth="2"/>
               <circle cx="17.5" cy="6.5" r="1.2" fill="white"/>
             </svg>
           </div>
-          <span style={{ color: '#aaa', fontSize: 10, fontWeight: 600 }}>@joven_mas_florida</span>
+          <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9, fontWeight: 600 }}>@joven_mas_florida</span>
         </a>
         <a href="https://facebook.com/jovenmasflorida" target="_blank" rel="noopener noreferrer"
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
-          <div style={{ width: 44, height: 44, borderRadius: 14, background: '#1877F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textDecoration: 'none' }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
               <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
             </svg>
           </div>
-          <span style={{ color: '#aaa', fontSize: 10, fontWeight: 600 }}>Joven+ Florida</span>
+          <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9, fontWeight: 600 }}>Joven+ Florida</span>
         </a>
       </div>
-      <div style={{ borderTop: '1px solid #333', paddingTop: 14, textAlign: 'center' }}>
-        <div style={{ color: '#666', fontSize: 11, marginBottom: 4 }}>
-          © {new Date().getFullYear()} Joven+ Florida — Municipalidad de Florida
-        </div>
-        <div style={{ color: '#555', fontSize: 10 }}>
-          Programa de beneficios para jóvenes. Todos los derechos reservados.
-        </div>
+      <div style={{ textAlign: 'center', paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9 }}>
+          © {new Date().getFullYear()} Joven+ Florida — Todos los derechos reservados
+        </span>
       </div>
     </div>
   )
@@ -317,7 +314,6 @@ export default function Home() {
       </div>
 
       <div style={{ flex: 1, maxWidth: 800, margin: '0 auto', padding: '1rem', width: '100%' }}>
-
         {tab === 'beneficiarios' && (
           <>
             <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: '1.5rem' }}>
