@@ -1,6 +1,43 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
+function Footer() {
+  return (
+    <div style={{ background: '#111', padding: '2rem 1rem 1.5rem', marginTop: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginBottom: 16 }}>
+        <a href="https://instagram.com/joven_mas_florida" target="_blank" rel="noopener noreferrer"
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+          <div style={{ width: 44, height: 44, borderRadius: 14, background: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+              <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="white" strokeWidth="2" fill="none"/>
+              <circle cx="12" cy="12" r="4" stroke="white" strokeWidth="2" fill="none"/>
+              <circle cx="17.5" cy="6.5" r="1.2" fill="white"/>
+            </svg>
+          </div>
+          <span style={{ color: '#aaa', fontSize: 10, fontWeight: 600 }}>@joven_mas_florida</span>
+        </a>
+        <a href="https://facebook.com/jovenmasflorida" target="_blank" rel="noopener noreferrer"
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+          <div style={{ width: 44, height: 44, borderRadius: 14, background: '#1877F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+              <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+            </svg>
+          </div>
+          <span style={{ color: '#aaa', fontSize: 10, fontWeight: 600 }}>Joven+ Florida</span>
+        </a>
+      </div>
+      <div style={{ borderTop: '1px solid #333', paddingTop: 14, textAlign: 'center' }}>
+        <div style={{ color: '#666', fontSize: 11, marginBottom: 4 }}>
+          © {new Date().getFullYear()} Joven+ Florida — Municipalidad de Florida
+        </div>
+        <div style={{ color: '#555', fontSize: 10 }}>
+          Programa de beneficios para jóvenes. Todos los derechos reservados.
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ComerciosPage() {
   const [comercios, setComercios] = useState([])
   const [loading, setLoading] = useState(true)
@@ -28,7 +65,6 @@ export default function ComerciosPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#00B5AD', display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}>
 
-      {/* Header */}
       <div style={{ padding: '16px 1rem 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ width: 36, height: 36, background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -42,43 +78,31 @@ export default function ComerciosPage() {
         </div>
       </div>
 
-      {/* Banner */}
       <div style={{ background: 'rgba(255,255,255,0.15)', margin: '0 1rem 16px', borderRadius: 14, padding: '12px 16px', textAlign: 'center' }}>
         <div style={{ color: 'white', fontSize: 13, fontWeight: 600 }}>
           🎉 Presenta tu tarjeta Joven+ y accede a descuentos exclusivos
         </div>
       </div>
 
-      {/* Buscador */}
       <div style={{ margin: '0 1rem 16px', position: 'relative' }}>
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Buscar por nombre, categoría o sector..."
-          style={{
-            width: '100%', padding: '13px 16px 13px 42px', borderRadius: 14,
-            border: 'none', fontSize: 14, background: 'white',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.1)', outline: 'none',
-            boxSizing: 'border-box', fontFamily: 'inherit'
-          }}
+          style={{ width: '100%', padding: '13px 16px 13px 42px', borderRadius: 14, border: 'none', fontSize: 14, background: 'white', boxShadow: '0 2px 12px rgba(0,0,0,0.1)', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
         />
         <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 18 }}>🔍</span>
       </div>
 
-      {/* Lista */}
       <div style={{ flex: 1, padding: '0 1rem 2rem' }}>
         {loading && <div style={{ textAlign: 'center', color: 'white', padding: '3rem', fontSize: 14 }}>Cargando comercios...</div>}
-
         {!loading && filtered.length === 0 && (
           <div style={{ textAlign: 'center', color: 'white', padding: '3rem', fontSize: 14 }}>
             {search ? 'No se encontraron resultados.' : 'No hay comercios registrados aún.'}
           </div>
         )}
-
         {filtered.map((c, idx) => (
           <div key={idx} style={{ background: 'white', borderRadius: 16, padding: '18px', marginBottom: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
-            
-            {/* Fila principal */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <div style={{ width: 50, height: 50, borderRadius: '50%', background: idx % 2 === 0 ? '#00B5AD' : '#D63D8F', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 900, flexShrink: 0 }}>
                 {(c.nombre[0] || '').toUpperCase()}
@@ -92,8 +116,6 @@ export default function ComerciosPage() {
                 <div style={{ fontSize: 9, fontWeight: 800, color: 'rgba(255,255,255,0.85)', letterSpacing: 1 }}>DESCUENTO</div>
               </div>
             </div>
-
-            {/* Ubicación */}
             {(c.direccion || c.sector) && (
               <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #f0f0f0', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                 <span style={{ fontSize: 15, flexShrink: 0 }}>📍</span>
@@ -103,21 +125,9 @@ export default function ComerciosPage() {
                 </div>
               </div>
             )}
-
-            {/* Botón Maps */}
             {c.maps_url && (
-              <a
-                href={c.maps_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  marginTop: 14, padding: '11px', borderRadius: 12,
-                  background: 'linear-gradient(135deg, #00B5AD, #008a84)',
-                  color: 'white', fontWeight: 700, fontSize: 13,
-                  textDecoration: 'none', boxShadow: '0 3px 10px rgba(0,181,173,0.3)'
-                }}
-              >
+              <a href={c.maps_url} target="_blank" rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 14, padding: '11px', borderRadius: 12, background: 'linear-gradient(135deg, #00B5AD, #008a84)', color: 'white', fontWeight: 700, fontSize: 13, textDecoration: 'none', boxShadow: '0 3px 10px rgba(0,181,173,0.3)' }}>
                 <span style={{ fontSize: 16 }}>🗺️</span>
                 Cómo llegar
               </a>
@@ -125,6 +135,8 @@ export default function ComerciosPage() {
           </div>
         ))}
       </div>
+
+      <Footer />
     </div>
   )
 }
