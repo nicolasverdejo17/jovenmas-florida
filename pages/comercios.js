@@ -141,7 +141,7 @@ function ComercioCard({ c, idx }) {
           {desc.map((item, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fdf0f7', borderRadius: 10, padding: '10px 14px' }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: '#333' }}>{item.cat}</span>
-              <span style={{ fontSize: 15, fontWeight: 900, color: '#D63D8F' }}>{item.pct}% off</span>
+              <span style={{ fontSize: 15, fontWeight: 900, color: '#D63D8F' }}>{item.pct}%</span>
             </div>
           ))}
         </div>
